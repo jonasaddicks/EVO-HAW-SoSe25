@@ -12,33 +12,21 @@ class Settings(BaseSettings):
 
     Settings are loaded from environment variables (loaded beforehand via dotenv).
     Pydantic handles type validation and parsing.
-
-    Attributes:
-        DEBUG (bool): Enables debug mode if set to True.
-        CAMERAS_UPDATE_RATE (int): Update interval in seconds for camera and matrix data.
-        ENCODING (str): Encoding format used for data serialization (default: 'utf-8').
-        ADDRESS_CALIBRATION (str): Network address of the calibration component.
-        ADDRESS_SKELETON (str): Network address of the skeleton component.
-        ADDRESS_VISUALIZATION (str): Network address of the visualization component (optional).
-        HOSTNAME (str): Hostname where this application is served.
-        PORT (int): Port number for serving this application.
     """
     DEBUG: bool = False
 
-    # Update rate of cameras and corresponding matrices
-    CAMERAS_UPDATE_RATE: int = 300  # 300s -> 5min
+    NUMBER_DRONES: int = 5
+    DRONE_RADIUS: float = 1.0
+    DRONE_MAX_SPEED: float = 10.0
+    INITIAL_CONTROL_POINTS: int = 5
 
-    # Data encoding
-    ENCODING: str = 'utf-8'
+    MAP_SIZE_X: int = 100
+    MAP_SIZE_Y: int = 100
+    NUMBER_OBSTACLES: int = 10
+    AVG_SIZE_OBSTACLE: int = 20
 
-    # Addresses of dependent components
-    ADDRESS_CALIBRATION: str = 'localhost:5555'
-    ADDRESS_SKELETON: str = 'localhost:5556'
-    ADDRESS_VISUALIZATION: str = 'localhost:5558'  # Not used since data is published via ZeroMQ
-
-    # Address this software is running under
-    HOSTNAME: str = 'localhost'
-    PORT: int = 5557
+    PSO_PARTICLES: int = 30
+    PSO_ITERATIONS: int = 200
 
 @lru_cache # Only create the first instance and return the cached instance otherwise
 def get_settings() -> Settings:
