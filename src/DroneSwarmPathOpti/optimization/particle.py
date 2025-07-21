@@ -10,7 +10,7 @@ class DronePath:
     control_points: list[tuple[float, float, float]]
 
     def __init__(self, control_points: list[tuple[float, float, float]]):
-        self.control_points = control_points # List of tuples (x, y, v)
+        self.control_points = control_points # List of tuples (x -> X-coordinate, y -> Y-coordinate, v -> drone velocity)
 
     def get_positions(self) -> list[tuple[float, float]]:
         return [(x, y) for x, y, _ in self.control_points]
@@ -18,31 +18,59 @@ class DronePath:
     def get_velocities(self) -> list[float]:
         return [v for _, _, v in self.control_points]
 
-# TODO
+
 class Particle:
 
-    def __init__(self, num_drones: int, num_control_points: int, map_bounds: tuple[int, int]):
-        self.num_drones = num_drones
-        self.num_control_points = num_control_points
-        self.map_bounds = map_bounds  # ((xmin, xmax), (ymin, ymax))
+    num_control_points: int
+    map_bounds: tuple[float, float]
+    max_drone_speed: float
 
-        self.position = self._initialize_position()
-        self.velocity = self._initialize_velocity()
+    particle_position: list[DronePath]
+    particle_velocity: list[DronePath]
 
-        self.best_position = deepcopy(self.position)
+    best_position: list[DronePath]
+    best_fitness: float
+    current_fitness: float
+
+    max_velocity_x: float
+    max_velocity_y: float
+    max_velocity_drone_velocity: float
+
+    weight_personal_position: float
+    weight_personal_best: float
+    weight_global_best: float
+
+    def __init__(self):
+        self.num_drones = settings.NUM_DRONES
+        self.num_control_points = settings.INITIAL_CONTROL_POINTS
+        self.map_bounds = (settings.ENVIRONMENT_SIZE_X, settings.ENVIRONMENT_SIZE_Y)  # (x_max, y_max)
+        self.max_drone_speed = settings.DRONE_MAX_SPEED
+
+        self.particle_position = self._initialize_position()
+        self.particle_velocity = self._initialize_velocity()
+
+        self.best_position = deepcopy(self.particle_position)
         self.best_fitness = float('inf')
-        self.current_fitness = None
+        self.current_fitness = float('inf')
+
+        self.max_velocity_x = settings.PSO_MAX_VELOCITY_Y
+        self.max_velocity_y = settings.PSO_MAX_VELOCITY_Y
+        self.max_velocity_drone_velocity = settings.PSO_MAX_VELOCITY_DRONE_VELOCITY
+
+        self.weight_personal_position = settings.PSO_WEIGHT_PERSONAL_POSITION
+        self.weight_personal_best = settings.PSO_WEIGHT_PERSONAL_BEST
+        self.weight_global_best = settings.PSO_WEIGHT_GLOBAL_BEST
 
     def _initialize_position(self):
-        xmin, xmax = self.map_bounds[0]
-        ymin, ymax = self.map_bounds[1]
+        x_min, x_max = 0, self.map_bounds[0]
+        y_min, y_max = 0, self.map_bounds[1]
 
         return [
             DronePath([
                 (
-                    np.random.uniform(xmin, xmax),
-                    np.random.uniform(ymin, ymax),
-                    np.random.uniform(1.0, 5.0)
+                    np.random.uniform(x_min, x_max), # X-coordinate
+                    np.random.uniform(y_min, y_max), # Y-coordinate
+                    np.random.uniform(0.0, self.max_drone_speed) # Drone velocity
                 )
                 for _ in range(self.num_control_points)
             ])
@@ -53,9 +81,9 @@ class Particle:
         return [
             DronePath([
                 (
-                    np.random.uniform(-1.0, 1.0),  # dx
-                    np.random.uniform(-1.0, 1.0),  # dy
-                    np.random.uniform(-0.5, 0.5)   # dv
+                    np.random.uniform(-self.max_velocity_x, self.max_velocity_x),  # dx
+                    np.random.uniform(-self.max_velocity_y, self.max_velocity_y),  # dy
+                    np.random.uniform(-self.max_velocity_drone_velocity, self.max_velocity_drone_velocity)   # dv
                 )
                 for _ in range(self.num_control_points)
             ])
@@ -65,39 +93,39 @@ class Particle:
     def update_position(self):
         for d in range(self.num_drones):
             for i in range(self.num_control_points):
-                x, y, v = self.position[d].control_points[i]
-                dx, dy, dv = self.velocity[d].control_points[i]
+                x, y, v = self.particle_position[d].control_points[i]
+                dx, dy, dv = self.particle_velocity[d].control_points[i]
 
                 new_x = x + dx
                 new_y = y + dy
-                new_v = max(0.1, v + dv)  # Geschwindigkeit immer positiv
+                new_v = max(0.0, v + dv)  # velocity always positive
 
-                self.position[d].control_points[i] = (new_x, new_y, new_v)
+                self.particle_position[d].control_points[i] = (new_x, new_y, new_v)
 
-    def update_velocity(self, global_best_position, w=0.5, c1=1.5, c2=1.5):
+    def update_velocity(self, global_best_position):
         for d in range(self.num_drones):
             for i in range(self.num_control_points):
-                px, py, pv = self.position[d].control_points[i]
-                vx, vy, vv = self.velocity[d].control_points[i]
-                pbest_x, pbest_y, pbest_v = self.best_position[d].control_points[i]
-                gbest_x, gbest_y, gbest_v = global_best_position[d].control_points[i]
+                current_position_x, current_position_y, current_position_v = self.particle_position[d].control_points[i]
+                velocity_x, velocity_y, velocity_v = self.particle_velocity[d].control_points[i]
+                personal_best_x, personal_best_y, personal_best_v = self.best_position[d].control_points[i]
+                global_best_x, global_best_y, global_best_v = global_best_position[d].control_points[i]
 
-                r1, r2 = np.random.rand(), np.random.rand()
+                random_factor_personal, random_factor_global = np.random.rand(), np.random.rand()
 
                 new_vx = (
-                    w * vx
-                    + c1 * r1 * (pbest_x - px)
-                    + c2 * r2 * (gbest_x - px)
+                        self.weight_personal_position * velocity_x
+                        + self.weight_personal_best * random_factor_personal * (personal_best_x - current_position_x)
+                        + self.weight_global_best * random_factor_global * (global_best_x - current_position_x)
                 )
                 new_vy = (
-                    w * vy
-                    + c1 * r1 * (pbest_y - py)
-                    + c2 * r2 * (gbest_y - py)
+                        self.weight_personal_position * velocity_y
+                        + self.weight_personal_best * random_factor_personal * (personal_best_y - current_position_y)
+                        + self.weight_global_best * random_factor_global * (global_best_y - current_position_y)
                 )
                 new_vv = (
-                    w * vv
-                    + c1 * r1 * (pbest_v - pv)
-                    + c2 * r2 * (gbest_v - pv)
+                        self.weight_personal_position * velocity_v
+                        + self.weight_personal_best * random_factor_personal * (personal_best_v - current_position_v)
+                        + self.weight_global_best * random_factor_global * (global_best_v - current_position_v)
                 )
 
-                self.velocity[d].control_points[i] = (new_vx, new_vy, new_vv)
+                self.particle_velocity[d].control_points[i] = (new_vx, new_vy, new_vv)

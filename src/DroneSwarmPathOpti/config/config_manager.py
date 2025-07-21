@@ -15,18 +15,34 @@ class Settings(BaseSettings):
     """
     DEBUG: bool = False
 
+    # DRONE PARAMETERS
     NUMBER_DRONES: int = 5
     DRONE_RADIUS: float = 1.0
     DRONE_MAX_SPEED: float = 10.0
     INITIAL_CONTROL_POINTS: int = 5
 
-    MAP_SIZE_X: int = 100
-    MAP_SIZE_Y: int = 100
+    # ENVIRONMENT PARAMETERS
+    ENVIRONMENT_SIZE_X: int = 100
+    ENVIRONMENT_SIZE_Y: int = 100
+    ENVIRONMENT_TRAVERSABLE: bool = True
     NUMBER_OBSTACLES: int = 10
     AVG_SIZE_OBSTACLE: int = 20
+    START_X: int = 10
+    START_Y: int = 10
+    START_RADIUS: int = 10
+    GOAL_X: int = 90
+    GOAL_Y: int = 90
+    GOAL_RADIUS: int = 10
 
+    # PARTICLE SWARM OPTIMIZATION PARAMETERS
     PSO_PARTICLES: int = 30
     PSO_ITERATIONS: int = 200
+    PSO_MAX_VELOCITY_X: float = 1.0
+    PSO_MAX_VELOCITY_Y: float = 1.0
+    PSO_MAX_VELOCITY_DRONE_VELOCITY: float = 1.0
+    PSO_WEIGHT_PERSONAL_POSITION: float = 1.0
+    PSO_WEIGHT_PERSONAL_BEST: float = 1.0
+    PSO_WEIGHT_GLOBAL_BEST: float = 1.0
 
 @lru_cache # Only create the first instance and return the cached instance otherwise
 def get_settings() -> Settings:
