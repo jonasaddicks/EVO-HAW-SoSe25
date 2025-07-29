@@ -23,8 +23,9 @@ def plot_environment(environment: Environment):
         circle = Circle(environment.goal.position, environment.goal.radius, color='blue', alpha=0.3)
         ax.add_patch(circle)
 
-    x_vals, y_vals = zip(*environment.validation_path)
-    ax.plot(x_vals, y_vals, color='red', linewidth=2, label="Path")
+    if environment.traversable and len(environment.validation_path) > 0:
+        x_vals, y_vals = zip(*environment.validation_path)
+        ax.plot(x_vals, y_vals, color='red', linewidth=2, label="Path")
 
     plt.grid(True)
     plt.title("Map")

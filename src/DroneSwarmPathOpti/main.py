@@ -7,6 +7,7 @@ settings = get_settings()
 def main():
     environment: Environment = Environment(
         (settings.ENVIRONMENT_SIZE_X, settings.ENVIRONMENT_SIZE_Y),
+        settings.ENVIRONMENT_TRAVERSABLE,
         (settings.START_X, settings.START_Y),
         settings.START_RADIUS,
         (settings.GOAL_X, settings.GOAL_Y),

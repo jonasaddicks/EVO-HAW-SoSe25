@@ -1,15 +1,9 @@
 import random
-import networkx as nx
 
-class MapObject:
+from .map_object import MapObject
+from .map_object import collision
 
-    position: tuple[int, int]
-    radius: float
-
-    def __init__(self, position: tuple[int, int], radius: float):
-        self.position = position
-        self.radius = radius
-
+from ..environment_utils import traverse
 
 class Obstacle(MapObject):
 
@@ -24,7 +18,7 @@ class Environment:
     goal: MapObject | None
 
     traversable:bool # True if there has to be at least one path from start to finish
-    validation_path: list[tuple[int, int]] | None
+    validation_path: list[tuple[int, int]] | None # None if not traversable
 
     def __init__(self,
                  bounds: tuple[int, int],
@@ -45,15 +39,15 @@ class Environment:
     def generate_obstacles(self,
                            obstacles: int,
                            base_radius: float
-                           ):
-
-        from DroneSwarmPathOpti.simulation import collision
+                           ) -> bool:
 
         (x_max, y_max) = self.bounds
+        tries_traversable: int = 0
         while True:
             obstacles_list: list[Obstacle] = []
             for _ in range(obstacles):
                 obstacle: Obstacle
+                tries_obstacle: int = 0
 
                 while True:
                     x = random.randint(0, x_max)
@@ -64,17 +58,31 @@ class Environment:
                             or
                             not (collision(obstacle, self.start) or collision(obstacle, self.goal))):
                         break  # Exit loop if generated object collides neither with start nor goal
+                    else:
+                        tries_obstacle += 1
+                        print(f'obstacle clipping with start or goal in try {tries_obstacle} - placing again')
+                        if tries_obstacle >= 10:
+                            print(f'exceeded number of tries for placing an obstacle, obstacles remain empty')
+                            return False # Exceeded maximum number of tries to generate an obstacle -> obstacles probably too big
                 obstacles_list.append(obstacle)
             self.obstacles = obstacles_list
 
-            if self.start is not None and self.goal is not None and self.traversable:
+            if self.traversable and self.start is not None and self.goal is not None:
                 path: list[tuple[int, int]] = self._validate_map() # Check if map is traversable from start to goal
                 if len(path) > 0: # Map is traversable
                     self.validation_path = path
                     break
+                else:
+                    tries_traversable += 1
+                    print(f'failed to traverse map in try {tries_traversable} - regenerating obstacles')
+                    if tries_traversable >= 10:
+                        self.validation_path = [] # Map should've been traversable but the algorithm was not able to find a feasible path with the given amount of tries
+                        print('failed to find a valid path - max number of tries exceeded, path is empty')
+                        return False # Exceeded maximum number of tries to traverse the map -> probably too many obstacles
             else: # Map must not be traversable or start/goal is none
                 self.validation_path = None
                 break
+        return True
 
     def _validate_map(self) -> list[tuple[int, int]]:
         width, height = self.bounds
@@ -88,34 +96,8 @@ class Environment:
                     if (x - ox) ** 2 + (y - oy) ** 2 <= r ** 2:
                         grid_data[y][x] = 1
 
-        grid = _grid_to_graph(grid_data)
         start = self.start.position
         goal = self.goal.position
 
-        path = nx.astar_path(grid, start, goal, heuristic=_heuristic)
+        path = traverse(grid_data, start, goal)
         return path
-
-
-def _grid_to_graph(grid):
-    nx_grid = nx.Graph()
-    height = len(grid)
-    width = len(grid[0])
-
-    for y in range(height):
-        for x in range(width):
-            if grid[y][x] == 1:
-                continue  # skip obstacle
-
-            nx_grid.add_node((x, y))
-
-            # connect neighbors
-            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                nx_, ny_ = x + dx, y + dy
-                if 0 <= nx_ < width and 0 <= ny_ < height:
-                    if grid[ny_][nx_] == 0:
-                        nx_grid.add_edge((x, y), (nx_, ny_))
-
-    return nx_grid
-
-def _heuristic(a, b):
-    return abs(a[0] - b[0]) + abs(a[1] - b[1])

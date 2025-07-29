@@ -1,5 +1,11 @@
-from DroneSwarmPathOpti.simulation.environment import MapObject
+class MapObject:
 
+    position: tuple[int, int]
+    radius: float
+
+    def __init__(self, position: tuple[int, int], radius: float):
+        self.position = position
+        self.radius = radius
 
 def collision(map_object_a: MapObject, map_object_b: MapObject) -> bool:
     x1, y1 = map_object_a.position
