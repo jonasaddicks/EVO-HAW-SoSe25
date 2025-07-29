@@ -13,7 +13,7 @@ import sys
 from typing import Any
 
 from DroneSwarmPathOpti.config import get_settings
-from DroneSwarmPathOpti.logging import Source
+from DroneSwarmPathOpti.project_logger import Source
 
 settings = get_settings() # Load config to check if debug output is enabled
 
