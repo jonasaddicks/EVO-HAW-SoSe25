@@ -1,3 +1,5 @@
 from .graph import traverse
 
-__all__ = ['traverse']
+from .spline import CubicBSpline
+
+__all__ = ['traverse', 'CubicBSpline']

@@ -53,7 +53,7 @@ class Particle:
         self.best_fitness = float('inf')
         self.current_fitness = float('inf')
 
-        self.max_velocity_x = settings.PSO_MAX_VELOCITY_Y
+        self.max_velocity_x = settings.PSO_MAX_VELOCITY_X
         self.max_velocity_y = settings.PSO_MAX_VELOCITY_Y
         self.max_velocity_drone_velocity = settings.PSO_MAX_VELOCITY_DRONE_VELOCITY
 
