@@ -1,8 +1,10 @@
 import random
 
+import numpy as np
+
+from .drone import Drone
 from .map_object import MapObject
 from .map_object import collision
-
 from ..environment_utils import traverse
 
 class Obstacle(MapObject):
@@ -13,6 +15,7 @@ class Obstacle(MapObject):
 
 class Environment:
     bounds: tuple[int, int]
+    drones: list[Drone]
     obstacles: list[Obstacle]
     start: MapObject | None
     goal: MapObject | None
@@ -22,6 +25,7 @@ class Environment:
 
     def __init__(self,
                  bounds: tuple[int, int],
+                 drones: list[Drone],
                  traversable: bool,
                  start: tuple[int, int]=None,
                  start_radius: int=5,
@@ -68,7 +72,7 @@ class Environment:
             self.obstacles = obstacles_list
 
             if self.traversable and self.start is not None and self.goal is not None:
-                path: list[tuple[int, int]] = self._validate_map() # Check if map is traversable from start to goal
+                path: list[tuple[int, int]] = self._validate_map() # Check if a map is traversable from start to goal
                 if len(path) > 0: # Map is traversable
                     self.validation_path = path
                     break
@@ -76,7 +80,7 @@ class Environment:
                     tries_traversable += 1
                     print(f'failed to traverse map in try {tries_traversable} - regenerating obstacles')
                     if tries_traversable >= 10:
-                        self.validation_path = [] # Map should've been traversable but the algorithm was not able to find a feasible path with the given amount of tries
+                        self.validation_path = [] # The Map should've been traversable, but the algorithm was not able to find a possible path with the given number of tries
                         print('failed to find a valid path - max number of tries exceeded, path is empty')
                         return False # Exceeded maximum number of tries to traverse the map -> probably too many obstacles
             else: # Map must not be traversable or start/goal is none
@@ -101,3 +105,16 @@ class Environment:
 
         path = traverse(grid_data, start, goal)
         return path
+
+    def number_of_collisions(self, drone: Drone, resolution: float=0.1) -> int:
+        if drone is None:
+            raise ValueError('drone is None')
+
+        collisions: int = 0
+        t_samples = np.arange(drone.path.t[0], drone.path.t[-1], resolution)
+        for t in t_samples:
+            drone.position = (drone.path.x(t), drone.path.y(t)) # Next step
+            for obstacle in self.obstacles:
+                if collision(obstacle, drone):
+                    collisions += 1
+        return collisions
