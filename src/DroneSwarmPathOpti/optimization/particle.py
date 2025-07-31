@@ -41,17 +41,10 @@ class Particle:
     weight_global_best: float
 
     def __init__(self):
-        self.num_drones = settings.NUM_DRONES
+        self.num_drones = settings.NUMBER_DRONES
         self.num_control_points = settings.INITIAL_CONTROL_POINTS
         self.map_bounds = (settings.ENVIRONMENT_SIZE_X, settings.ENVIRONMENT_SIZE_Y)  # (x_max, y_max)
         self.max_drone_speed = settings.DRONE_MAX_SPEED
-
-        self.particle_position = self._initialize_position()
-        self.particle_velocity = self._initialize_velocity()
-
-        self.best_position = deepcopy(self.particle_position)
-        self.best_fitness = float('inf')
-        self.current_fitness = float('inf')
 
         self.max_velocity_x = settings.PSO_MAX_VELOCITY_X
         self.max_velocity_y = settings.PSO_MAX_VELOCITY_Y
@@ -60,6 +53,13 @@ class Particle:
         self.weight_personal_position = settings.PSO_WEIGHT_PERSONAL_POSITION
         self.weight_personal_best = settings.PSO_WEIGHT_PERSONAL_BEST
         self.weight_global_best = settings.PSO_WEIGHT_GLOBAL_BEST
+
+        self.particle_position = self._initialize_position()
+        self.particle_velocity = self._initialize_velocity()
+
+        self.best_position = deepcopy(self.particle_position)
+        self.best_fitness = float('inf')
+        self.current_fitness = float('inf')
 
     def _initialize_position(self):
         x_min, x_max = 0, self.map_bounds[0]
@@ -102,7 +102,7 @@ class Particle:
 
                 self.particle_position[d].control_points[i] = (new_x, new_y, new_v)
 
-    def update_velocity(self, global_best_position):
+    def update_velocity(self, global_best_position: list[DronePath]):
         for d in range(self.num_drones):
             for i in range(self.num_control_points):
                 current_position_x, current_position_y, current_position_v = self.particle_position[d].control_points[i]

@@ -1,5 +1,7 @@
 from DroneSwarmPathOpti.config import get_settings
-from DroneSwarmPathOpti.simulation import Environment, Drone
+from DroneSwarmPathOpti.optimization.fitness import calculate_fitness
+from DroneSwarmPathOpti.optimization.pso import PSO
+from DroneSwarmPathOpti.simulation import Environment, Drone, CubicBSpline
 from DroneSwarmPathOpti.visualization.plot import plot_environment
 
 settings = get_settings()
@@ -23,6 +25,13 @@ def main():
         settings.GOAL_RADIUS
     )
     environment.generate_obstacles(settings.NUMBER_OBSTACLES, settings.AVG_SIZE_OBSTACLE)
+
+    pso: PSO = PSO(calculate_fitness, environment, settings.PSO_PARTICLES, settings.PSO_ITERATIONS)
+    solution = pso.optimize()
+
+    for drone, path in zip(drones, solution[0]):
+        spline: CubicBSpline = CubicBSpline(path.control_points)
+        drone.path = spline
     plot_environment(environment)
 
 if __name__ == '__main__':

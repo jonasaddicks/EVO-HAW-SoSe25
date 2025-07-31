@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.patches import Circle
 
 from DroneSwarmPathOpti.simulation import Environment
@@ -30,19 +31,17 @@ def plot_environment(environment: Environment):
         x_vals, y_vals = zip(*environment.validation_path)
         ax.plot(x_vals, y_vals, color='red', linewidth=2, label="Path")
 
-    """
-    # Draw a temporary test spline
-    spline = get_test_spline()
-    spline_x = spline.x
-    spline_y = spline.y
-    spline_t = spline.t
-    t_range = (spline_t[0], spline_t[-1])
+    for drone in environment.drones:
+        spline = drone.path
+        spline_x = spline.x
+        spline_y = spline.y
+        spline_t = spline.t
+        t_range = (spline_t[0], spline_t[-1])
 
-    t_vals = np.linspace(t_range[0], t_range[1], 200)
-    x_vals = spline_x(t_vals)
-    y_vals = spline_y(t_vals)
-    ax.plot(x_vals, y_vals, linewidth=2)
-    """
+        t_vals = np.linspace(t_range[0], t_range[1], 200)
+        x_vals = spline_x(t_vals)
+        y_vals = spline_y(t_vals)
+        ax.plot(x_vals, y_vals, linewidth=2)
 
     plt.grid(True)
     plt.title("Map")

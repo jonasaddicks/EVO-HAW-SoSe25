@@ -12,8 +12,15 @@ class Obstacle(MapObject):
     def __init__(self, position: tuple[int, int], base_radius: float):
         super().__init__(position, random.uniform(base_radius - base_radius*0.5, base_radius*1.5))
 
+class SingletonMeta(type):
+    _instances = {}
 
-class Environment:
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super().__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+class Environment(metaclass=SingletonMeta):
     bounds: tuple[int, int]
     drones: list[Drone]
     obstacles: list[Obstacle]
@@ -38,6 +45,7 @@ class Environment:
 
         self.traversable = traversable
         self.bounds = bounds
+        self.drones = drones
         self.obstacles = []
 
     def generate_obstacles(self,
@@ -106,15 +114,16 @@ class Environment:
         path = traverse(grid_data, start, goal)
         return path
 
-    def number_of_collisions(self, drone: Drone, resolution: float=0.1) -> int:
-        if drone is None:
-            raise ValueError('drone is None')
-
+    def number_of_collisions(self, resolution: float=0.1) -> int: # TODO calculate collisions with other drones
         collisions: int = 0
-        t_samples = np.arange(drone.path.t[0], drone.path.t[-1], resolution)
-        for t in t_samples:
-            drone.position = (drone.path.x(t), drone.path.y(t)) # Next step
-            for obstacle in self.obstacles:
-                if collision(obstacle, drone):
-                    collisions += 1
+        for drone in self.drones:
+            if drone.path is None:
+                raise ValueError('drone is None')
+
+            t_samples = np.arange(drone.path.t[0], drone.path.t[-1], resolution)
+            for t in t_samples:
+                drone.position = (drone.path.x(t), drone.path.y(t)) # Next step
+                for obstacle in self.obstacles:
+                    if collision(obstacle, drone):
+                        collisions += 1
         return collisions
