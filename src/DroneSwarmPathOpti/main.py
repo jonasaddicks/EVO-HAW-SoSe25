@@ -30,7 +30,11 @@ def main():
     solution = pso.optimize()
 
     for drone, path in zip(drones, solution[0]):
-        spline: CubicBSpline = CubicBSpline(path.control_points)
+        spline: CubicBSpline = CubicBSpline(
+            [(environment.start.position[0], environment.start.position[1], 1.0)]
+            + path.control_points
+            + [(environment.goal.position[0], environment.goal.position[1], 1.0)]
+        )
         drone.path = spline
     plot_environment(environment)
 

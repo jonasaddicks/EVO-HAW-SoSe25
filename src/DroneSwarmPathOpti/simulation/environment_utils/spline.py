@@ -7,7 +7,11 @@ class CubicBSpline:
     x: CubicSpline
     y: CubicSpline
 
+    raw_path: list[tuple[float, float, float]]
+
     def __init__(self, path: list[tuple[float, float, float]]):
+        self.raw_path = path
+
         distances: list[float] = [0]
         for i in range(1, len(path)):
             x0, y0, v0 = path[i - 1]

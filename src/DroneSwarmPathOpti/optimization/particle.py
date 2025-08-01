@@ -98,17 +98,17 @@ class Particle:
 
                 new_x = x + dx
                 new_y = y + dy
-                new_v = max(0.0, v + dv)  # velocity always positive
+                new_v = min(max(0.0, v + dv), self.max_drone_speed)  # velocity always positive but below max drone speed
 
                 self.particle_position[d].control_points[i] = (new_x, new_y, new_v)
 
-    def update_velocity(self, global_best_position: list[DronePath]):
-        for d in range(self.num_drones):
-            for i in range(self.num_control_points):
-                current_position_x, current_position_y, current_position_v = self.particle_position[d].control_points[i]
-                velocity_x, velocity_y, velocity_v = self.particle_velocity[d].control_points[i]
-                personal_best_x, personal_best_y, personal_best_v = self.best_position[d].control_points[i]
-                global_best_x, global_best_y, global_best_v = global_best_position[d].control_points[i]
+    def update_velocity(self, global_best_position: list[DronePath]): # TODO implement maximum velocity for every dimension (maybe gradually declining maximum velocity?)
+        for drone in range(self.num_drones):
+            for control_point in range(self.num_control_points):
+                current_position_x, current_position_y, current_position_v = self.particle_position[drone].control_points[control_point]
+                velocity_x, velocity_y, velocity_v = self.particle_velocity[drone].control_points[control_point]
+                personal_best_x, personal_best_y, personal_best_v = self.best_position[drone].control_points[control_point]
+                global_best_x, global_best_y, global_best_v = global_best_position[drone].control_points[control_point]
 
                 random_factor_personal, random_factor_global = np.random.rand(), np.random.rand()
 
@@ -128,4 +128,4 @@ class Particle:
                         + self.weight_global_best * random_factor_global * (global_best_v - current_position_v)
                 )
 
-                self.particle_velocity[d].control_points[i] = (new_vx, new_vy, new_vv)
+                self.particle_velocity[drone].control_points[control_point] = (new_vx, new_vy, new_vv)
