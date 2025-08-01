@@ -12,20 +12,26 @@ class CubicBSpline:
     def __init__(self, path: list[tuple[float, float, float]]):
         self.raw_path = path
 
-        distances: list[float] = [0]
+        timestamps: list[float] = [0]
         for i in range(1, len(path)):
             x0, y0, v0 = path[i - 1]
             x1, y1, v1 = path[i]
             distance: float = np.hypot(x1 - x0, y1 - y0)  # Euclidian distance
             average_velocity: float = (v0 + v1) / 2
-            delta_time: float = distance / average_velocity if average_velocity > 0 else distance  # Time: distance / velocity
-            distances.append(distances[-1] + delta_time)
+            delta_time: float = distance / average_velocity # Time: distance / velocity
+            if delta_time <= 0:
+                delta_time += 1e-6
+            timestamps.append(timestamps[-1] + delta_time)
 
-        t_temp = np.array(distances)
+        t_temp = np.array(timestamps)
+
+        if not np.all(np.diff(t_temp) > 0):
+            raise ValueError(f"Non-increasing time values in spline path: {t_temp}")
+
         x_temp = np.array([p[0] for p in path])
         y_temp = np.array([p[1] for p in path])
 
-        self.t = np.array(distances)
+        self.t = np.array(timestamps)
         self.x = CubicSpline(t_temp, x_temp)
         self.y = CubicSpline(t_temp, y_temp)
 

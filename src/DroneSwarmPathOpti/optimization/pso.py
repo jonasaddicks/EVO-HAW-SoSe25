@@ -8,7 +8,7 @@ from .particle import Particle, DronePath
 
 class PSO:
 
-    fitness_function: Callable[[Particle, Environment], float]
+    fitness_function: Callable[[list[DronePath], Environment], float]
     environment: Environment
     num_particles: int
     max_iterations: int
@@ -32,7 +32,7 @@ class PSO:
     def optimize(self):
         for iteration in range(self.max_iterations):
             for particle in self.particles:
-                fitness = self.fitness_function(particle, self.environment) # Calculate fitness for current particle
+                fitness = self.fitness_function(particle.particle_position, self.environment) # Calculate fitness for current particle
 
                 particle.current_fitness = fitness
 

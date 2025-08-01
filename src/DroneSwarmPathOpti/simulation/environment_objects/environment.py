@@ -114,16 +114,16 @@ class Environment(metaclass=SingletonMeta):
         path = traverse(grid_data, start, goal)
         return path
 
-    def number_of_collisions(self, resolution: float=0.1) -> int: # TODO calculate collisions with other drones
-        collisions: int = 0
+    def get_collisions(self, resolution: float=1.0) -> list[tuple[int, int]]: # TODO calculate collisions with other drones
+        collisions: list[tuple[int, int]] = []
         for drone in self.drones:
             if drone.path is None:
-                raise ValueError('drone is None')
+                raise ValueError('drone.path is None')
 
             t_samples = np.arange(drone.path.t[0], drone.path.t[-1], resolution)
             for t in t_samples:
                 drone.position = (drone.path.x(t), drone.path.y(t)) # Next step
                 for obstacle in self.obstacles:
                     if collision(obstacle, drone):
-                        collisions += 1
+                        collisions.append(drone.position)
         return collisions

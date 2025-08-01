@@ -24,12 +24,15 @@ class Settings(BaseSettings):
     # ENVIRONMENT PARAMETERS
     ENVIRONMENT_SIZE_X: int = 100
     ENVIRONMENT_SIZE_Y: int = 100
+
     ENVIRONMENT_TRAVERSABLE: bool = True
     NUMBER_OBSTACLES: int = 10
     AVG_SIZE_OBSTACLE: int = 20
+
     START_X: int = 10
     START_Y: int = 10
     START_RADIUS: int = 10
+
     GOAL_X: int = 90
     GOAL_Y: int = 90
     GOAL_RADIUS: int = 10
@@ -37,9 +40,16 @@ class Settings(BaseSettings):
     # PARTICLE SWARM OPTIMIZATION PARAMETERS
     PSO_PARTICLES: int = 30
     PSO_ITERATIONS: int = 200
-    PSO_MAX_VELOCITY_X: float = 1.0
-    PSO_MAX_VELOCITY_Y: float = 1.0
-    PSO_MAX_VELOCITY_DRONE_VELOCITY: float = 1.0
+
+    PSO_MAX_INITIAL_VELOCITY_X: float = 1.0
+    PSO_MAX_INITIAL_VELOCITY_Y: float = 1.0
+    PSO_MAX_INITIAL_VELOCITY_DRONE_VELOCITY: float = 0.3
+
+    PSO_MAX_VELOCITY_X: float = 5.0
+    PSO_MAX_VELOCITY_Y: float = 5.0
+    PSO_MAX_VELOCITY_DRONE_VELOCITY: float = 2.0
+    PSO_VELOCITY_DAMPING: float = 0.5
+
     PSO_WEIGHT_PERSONAL_POSITION: float = 1.0
     PSO_WEIGHT_PERSONAL_BEST: float = 1.0
     PSO_WEIGHT_GLOBAL_BEST: float = 1.0
