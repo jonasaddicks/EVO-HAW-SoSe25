@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 
 from DroneSwarmPathOpti.config import get_settings
@@ -78,43 +80,71 @@ class Particle:
         self.best_fitness = float('inf')
         self.current_fitness = float('inf')
 
-    def _initialize_position(self): # TODO initialize points in quadrants
+    def _initialize_position(self):
+        # Map bounds
         x_min, x_max = 0, self.map_bounds[0]
         y_min, y_max = 0, self.map_bounds[1]
+
+        # Vector start -> goal
         vec_start_goal: np.array = np.array([
             self.map_goal[0] - self.map_start[0],
             self.map_goal[1] - self.map_start[1]
         ])
+        # Vector perpendicular to vector start -> goal
         vec_perpendicular_start_goal: np.array = np.array([
             vec_start_goal[0],
             -vec_start_goal[1]
         ])
+
+        # Perpendicular distance between two most outer drone paths
         perpendicular_length: float = (self.num_drones - 1) * self.initial_distance_paths
+
+        # Distance start -> goal
+        length_start_goal: float = math.sqrt((self.map_goal[0] - self.map_start[0])**2 + (self.map_goal[1] - self.map_start[1])**2)
+
+        # Point in the middle of vector start -> goal
         point_middle_start_goal: np.array = np.array ([
             self.map_start[0] + vec_start_goal[0] * 0.5,
             self.map_start[1] + vec_start_goal[1] * 0.5
         ])
 
+        # Normalized vector perpendicular to vector start -> goal
         vec_normalized_perpendicular_start_goal: np.array = vec_perpendicular_start_goal / np.linalg.norm(vec_perpendicular_start_goal)
-        point_anchor: np.array = point_middle_start_goal + perpendicular_length * 0.5 * vec_normalized_perpendicular_start_goal
+
+        # Normalized vector start -> goal
+        vec_normalized_start_goal: np.array = vec_start_goal / np.linalg.norm(vec_start_goal)
+
+        # Point in the middle of the most outer drone path
+        point_anchor_drone: np.array = point_middle_start_goal + perpendicular_length * 0.5 * vec_normalized_perpendicular_start_goal
+
+        # Portion of the distance start -> goal each drone path has
         peak_profile: list[float] = self._generate_peak_profile(self.num_drones)
 
-        initial_position: list[DronePath]
-        for height, drone in zip(peak_profile, range(self.num_drones)):
-            for control_point in range(self.num_control_points):
-                pass # TODO
+        # Point on the lower end of the most outer drone path
+        point_anchor_control_point: np.array = point_anchor_drone + length_start_goal * 0.5 * peak_profile[0] * -vec_normalized_start_goal
 
-        return [
-            DronePath([
-                (
-                    np.random.uniform(x_min, x_max), # X-coordinate
-                    np.random.uniform(y_min, y_max), # Y-coordinate
-                    np.random.uniform(0.0, self.max_drone_speed) # Drone velocity
-                )
-                for control_point in range(self.num_control_points)
-            ])
-            for height, drone in zip(peak_profile, range(self.num_drones))
-        ]
+        # Distance between each control_point on the path
+        distance_control_points: float = length_start_goal * peak_profile[0] / (self.num_drones + 1)
+
+        initial_position: list[DronePath] = []
+        for height, _ in zip(peak_profile, range(self.num_drones)):
+
+            control_points: list[tuple[float, float, float]] = []
+            for _ in range(self.num_control_points):
+                point_anchor_control_point = point_anchor_control_point + distance_control_points * vec_normalized_start_goal
+                control_points.append((
+                    np.random.uniform(point_anchor_control_point[0] - self.initial_position_bounds / 2,
+                                      point_anchor_control_point[0] + self.initial_position_bounds / 2),  # X-coordinate
+                    np.random.uniform(point_anchor_control_point[1] - self.initial_position_bounds / 2,
+                                      point_anchor_control_point[1] + self.initial_position_bounds / 2),  # Y-coordinate
+                    np.random.uniform(0.0, self.max_drone_speed)  # Drone velocity
+                ))
+            initial_position.append(DronePath(control_points))
+
+            point_anchor_drone = point_anchor_drone + self.initial_distance_paths * -vec_normalized_perpendicular_start_goal
+            point_anchor_control_point = point_anchor_drone + length_start_goal * 0.5 * height * -vec_normalized_start_goal
+            distance_control_points = length_start_goal * height / (self.num_drones + 1)
+        return initial_position
 
     def _initialize_velocity(self):
         return [

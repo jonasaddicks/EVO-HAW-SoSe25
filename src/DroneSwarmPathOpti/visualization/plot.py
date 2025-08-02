@@ -73,7 +73,7 @@ def plot_environment(environment: Environment):
     # Draw collisions
     for collision in environment.get_collisions_drones():
         x, y = collision
-        ax.plot(x, y, color='#ff6f00', marker='o', markersize=4, linestyle='None')
+        ax.plot(x, y, color='#ff6f00', marker='o', markersize=6, linestyle='None')
     for collision in environment.get_collisions_obstacles():
         x, y = collision
         ax.plot(x, y, color='#e61d12', marker='o', markersize=3, linestyle='None')
