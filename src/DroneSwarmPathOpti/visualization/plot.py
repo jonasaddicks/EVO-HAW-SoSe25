@@ -1,3 +1,4 @@
+import collections
 import colorsys
 
 import matplotlib
@@ -11,7 +12,7 @@ from matplotlib import cm
 from matplotlib.collections import LineCollection
 from matplotlib.patches import Circle
 from matplotlib.widgets import Slider
-from scipy.interpolate import CubicSpline, interp1d
+from scipy.interpolate import interp1d
 
 from DroneSwarmPathOpti.simulation import Environment
 
@@ -53,7 +54,7 @@ def plot_environment(environment: Environment):
 
         # Velocity interpolation
         v_vals = interp1d(spline.t, [p[2] for p in spline.raw_path], kind='linear', fill_value='extrapolate')(t_vals)
-        v_norm = (v_vals - 0.1) / (settings.DRONE_MAX_SPEED - 0.1 + 1e-9) # Normalizing
+        v_norm: collections.Iterable = np.array((v_vals - 0.1) / (settings.DRONE_MAX_SPEED - 0.1 + 1e-9)) # Normalizing
 
         # Base color for the path
         base_rgb = cm.get_cmap("brg", len(environment.drones))(i)[:3]

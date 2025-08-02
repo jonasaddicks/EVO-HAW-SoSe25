@@ -28,14 +28,14 @@ class CubicBSpline:
         if not np.all(np.diff(t_temp) > 0):
             raise ValueError(f"Non-increasing time values in spline path: {t_temp}")
 
+        self.t = t_temp
         x_temp = np.array([p[0] for p in path])
         y_temp = np.array([p[1] for p in path])
 
-        self.t = np.array(timestamps)
         self.x = CubicSpline(t_temp, x_temp)
         self.y = CubicSpline(t_temp, y_temp)
 
-    def calculate_energy_usage(self, resolution: int=50, alpha: float=1.0, beta: float=0.1) -> float:
+    def calculate_energy_usage(self, resolution: int = 50, alpha: float = 1.0, beta: float = 0.1) -> float:
         ts = np.linspace(self.t[0], self.t[-1], resolution)
 
         dxdt = self.x.derivative()(ts)

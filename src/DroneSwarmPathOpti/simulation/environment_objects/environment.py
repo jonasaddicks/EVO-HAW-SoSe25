@@ -4,7 +4,7 @@ import numpy as np
 
 from .drone import Drone
 from .map_object import MapObject
-from .map_object import collision
+from .map_object import collision_objects
 from ..environment_utils import traverse
 
 class Obstacle(MapObject):
@@ -68,7 +68,7 @@ class Environment(metaclass=SingletonMeta):
                     if (
                             (self.start is None or self.goal is None)
                             or
-                            not (collision(obstacle, self.start) or collision(obstacle, self.goal))):
+                            not (collision_objects(obstacle, self.start) or collision_objects(obstacle, self.goal))):
                         break  # Exit loop if generated object collides neither with start nor goal
                     else:
                         tries_obstacle += 1
@@ -117,35 +117,36 @@ class Environment(metaclass=SingletonMeta):
     def get_collisions_obstacles(self, resolution: float=1.0) -> list[tuple[int, int]]: # TODO calculate collisions with other drones
         collisions_obstacles: list[tuple[int, int]] = []
         for drone in self.drones:
-            if drone.path is None:
-                raise ValueError('drone.path is None')
 
             t_samples = np.arange(drone.path.t[0], drone.path.t[-1], resolution)
             for t in t_samples:
-                drone.position = (drone.path.x(t), drone.path.y(t)) # Next step
+                x, y, r = drone.path.x(t), drone.path.y(t), drone.radius # Next step
                 for obstacle in self.obstacles:
-                    if collision(obstacle, drone):
-                        collisions_obstacles.append(drone.position)
+                    if _collision_raw(obstacle.position[0], obstacle.position[1], obstacle.radius, x, y, r):
+                        collisions_obstacles.append((x, y))
         return collisions_obstacles
 
     def get_collisions_drones(self, resolution: float=1.0) -> list[tuple[int, int]]:
         collisions_drones: list[tuple[int, int]] = []
-        t_max: float = 0
-        t_min: float = float('inf')
-        for drone in self.drones:
-            if drone.path is None:
-                raise ValueError('drone.path is None')
-            if drone.path.t[-2] > t_max:
-                t_max = float(drone.path.t[-2])
-            if drone.path.t[1] < t_min:
-                t_min = float(drone.path.t[1])
+        t_max: float = max(float(drone.path.t[-2]) for drone in self.drones)
+        t_min: float = min(float(drone.path.t[1]) for drone in self.drones)
         t_samples = np.arange(t_min, t_max, resolution)
 
-        for i, drone in enumerate(self.drones):
-            for t in t_samples:
-                drone.position = (drone.path.x(float(t)), drone.path.y(float(t)))  # Next step
-                for competing_drone in self.drones[i + 1:]:
-                    competing_drone.position = (competing_drone.path.x(float(t)), competing_drone.path.y(float(t)))
-                    if collision(competing_drone, drone):
-                        collisions_drones.append(drone.position)
+        for t in t_samples:
+            positions = [
+                (drone.path.x(float(t)), drone.path.y(float(t)), drone.radius) for drone in self.drones
+            ]
+
+            for i in range(len(positions)):
+                for j in range(i + 1, len(positions)):
+                    x1, y1, r1 = positions[i]
+                    x2, y2, r2 = positions[j]
+                    if _collision_raw(x1, y1, r1, x2, y2, r2):
+                        collisions_drones.append((x1, y1))
         return collisions_drones
+
+def _collision_raw(x1: float, y1: float, r1: float, x2: float, y2: float, r2: float) -> float:
+    dx = x2 - x1
+    dy = y2 - y1
+    dist_sq = dx * dx + dy * dy
+    return dist_sq < (r2 + r1)**2

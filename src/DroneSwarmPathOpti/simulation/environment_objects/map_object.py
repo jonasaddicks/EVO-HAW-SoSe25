@@ -7,7 +7,7 @@ class MapObject:
         self.position = position
         self.radius = radius
 
-def collision(map_object_a: MapObject, map_object_b: MapObject) -> bool:
+def collision_objects(map_object_a: MapObject, map_object_b: MapObject) -> bool:
     x1, y1 = map_object_a.position
     r1 = map_object_a.radius
     x2, y2 = map_object_b.position
