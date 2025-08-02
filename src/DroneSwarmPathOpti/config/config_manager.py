@@ -57,7 +57,7 @@ class Settings(BaseSettings):
     FITNESS_WEIGHT_ENERGY: float = 1.0
     FITNESS_WEIGHT_TIME: float = 1.0
     FITNESS_WEIGHT_COLLISIONS: float = 1.0
-    FITNESS_WEIGHT_BREACHES: float = 1.0
+    FITNESS_WEIGHT_COLLISIONS_DRONES: float = 1.0
 
 @lru_cache # Only create the first instance and return the cached instance otherwise
 def get_settings() -> Settings:

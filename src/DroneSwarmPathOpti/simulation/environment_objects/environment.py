@@ -114,8 +114,8 @@ class Environment(metaclass=SingletonMeta):
         path = traverse(grid_data, start, goal)
         return path
 
-    def get_collisions(self, resolution: float=1.0) -> list[tuple[int, int]]: # TODO calculate collisions with other drones
-        collisions: list[tuple[int, int]] = []
+    def get_collisions_obstacles(self, resolution: float=1.0) -> list[tuple[int, int]]: # TODO calculate collisions with other drones
+        collisions_obstacles: list[tuple[int, int]] = []
         for drone in self.drones:
             if drone.path is None:
                 raise ValueError('drone.path is None')
@@ -125,5 +125,27 @@ class Environment(metaclass=SingletonMeta):
                 drone.position = (drone.path.x(t), drone.path.y(t)) # Next step
                 for obstacle in self.obstacles:
                     if collision(obstacle, drone):
-                        collisions.append(drone.position)
-        return collisions
+                        collisions_obstacles.append(drone.position)
+        return collisions_obstacles
+
+    def get_collisions_drones(self, resolution: float=1.0) -> list[tuple[int, int]]:
+        collisions_drones: list[tuple[int, int]] = []
+        t_max: float = 0
+        t_min: float = float('inf')
+        for drone in self.drones:
+            if drone.path is None:
+                raise ValueError('drone.path is None')
+            if drone.path.t[-2] > t_max:
+                t_max = float(drone.path.t[-2])
+            if drone.path.t[1] < t_min:
+                t_min = float(drone.path.t[1])
+        t_samples = np.arange(t_min, t_max, resolution)
+
+        for i, drone in enumerate(self.drones):
+            for t in t_samples:
+                drone.position = (drone.path.x(float(t)), drone.path.y(float(t)))  # Next step
+                for competing_drone in self.drones[i + 1:]:
+                    competing_drone.position = (competing_drone.path.x(float(t)), competing_drone.path.y(float(t)))
+                    if collision(competing_drone, drone):
+                        collisions_drones.append(drone.position)
+        return collisions_drones

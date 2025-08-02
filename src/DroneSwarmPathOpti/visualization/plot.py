@@ -11,7 +11,7 @@ from matplotlib import cm
 from matplotlib.collections import LineCollection
 from matplotlib.patches import Circle
 from matplotlib.widgets import Slider
-from scipy.interpolate import CubicSpline
+from scipy.interpolate import CubicSpline, interp1d
 
 from DroneSwarmPathOpti.simulation import Environment
 
@@ -52,7 +52,7 @@ def plot_environment(environment: Environment):
         y_vals = spline.y(t_vals)
 
         # Velocity interpolation
-        v_vals = CubicSpline(spline.t, [p[2] for p in spline.raw_path])(t_vals)
+        v_vals = interp1d(spline.t, [p[2] for p in spline.raw_path], kind='linear', fill_value='extrapolate')(t_vals)
         v_norm = (v_vals - 0.1) / (settings.DRONE_MAX_SPEED - 0.1 + 1e-9) # Normalizing
 
         # Base color for the path
@@ -70,7 +70,10 @@ def plot_environment(environment: Environment):
         ax.add_collection(lc)
 
     # Draw collisions
-    for collision in environment.get_collisions():
+    for collision in environment.get_collisions_drones():
+        x, y = collision
+        ax.plot(x, y, color='#ff6f00', marker='o', markersize=4, linestyle='None')
+    for collision in environment.get_collisions_obstacles():
         x, y = collision
         ax.plot(x, y, color='#e61d12', marker='o', markersize=3, linestyle='None')
 

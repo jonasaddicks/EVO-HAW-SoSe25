@@ -21,13 +21,15 @@ def calculate_fitness(particle_position: list[DronePath], environment: Environme
         energy_usage += spline.calculate_energy_usage()
         time_usage += spline.calculate_time_usage()
 
-    number_collisions: int = len(environment.get_collisions())
+    number_collisions_obstacles: int = len(environment.get_collisions_obstacles())
+    number_collisions_drones: int = len(environment.get_collisions_drones())
 
     return (
             settings.FITNESS_WEIGHT_TIME * time_usage
             +
             settings.FITNESS_WEIGHT_ENERGY * energy_usage
             +
-            settings.FITNESS_WEIGHT_COLLISIONS * number_collisions
+            settings.FITNESS_WEIGHT_COLLISIONS * number_collisions_obstacles
+            +
+            settings.FITNESS_WEIGHT_COLLISIONS_DRONES * number_collisions_drones
     )
-    # TODO implement a version considering distance to goal (without the goal already being part of the spline)
