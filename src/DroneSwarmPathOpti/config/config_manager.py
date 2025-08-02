@@ -44,6 +44,8 @@ class Settings(BaseSettings):
     PSO_MAX_INITIAL_VELOCITY_X: float = 1.0
     PSO_MAX_INITIAL_VELOCITY_Y: float = 1.0
     PSO_MAX_INITIAL_VELOCITY_DRONE_VELOCITY: float = 0.3
+    PSO_INITIAL_POSITION_BOUNDS: float = 30
+    PSO_INITIAL_DISTANCE_PATHS: float = 10
 
     PSO_MAX_VELOCITY_X: float = 5.0
     PSO_MAX_VELOCITY_Y: float = 5.0

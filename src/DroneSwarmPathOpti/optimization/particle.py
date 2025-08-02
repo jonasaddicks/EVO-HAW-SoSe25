@@ -23,6 +23,8 @@ class Particle:
 
     num_control_points: int
     map_bounds: tuple[float, float]
+    map_start: tuple[float, float]
+    map_goal: tuple[float, float]
     max_drone_speed: float
 
     particle_position: list[DronePath]
@@ -49,16 +51,21 @@ class Particle:
         self.num_drones = settings.NUMBER_DRONES
         self.num_control_points = settings.INITIAL_CONTROL_POINTS
         self.map_bounds = (settings.ENVIRONMENT_SIZE_X, settings.ENVIRONMENT_SIZE_Y)  # (x_max, y_max)
+        self.map_start = (settings.START_X, settings.START_Y)
+        self.map_goal = (settings.GOAL_X, settings.GOAL_Y)
         self.max_drone_speed = settings.DRONE_MAX_SPEED
 
         self.max_initial_velocity_x = settings.PSO_MAX_INITIAL_VELOCITY_X
         self.max_initial_velocity_y = settings.PSO_MAX_INITIAL_VELOCITY_Y
         self.max_initial_velocity_drone_velocity = settings.PSO_MAX_INITIAL_VELOCITY_DRONE_VELOCITY
-        self.velocity_damping = settings.PSO_VELOCITY_DAMPING
+        self.initial_position_bounds = settings.PSO_INITIAL_POSITION_BOUNDS
+        self.initial_distance_paths = settings.PSO_INITIAL_DISTANCE_PATHS
 
         self.max_velocity_x = settings.PSO_MAX_VELOCITY_X
         self.max_velocity_y = settings.PSO_MAX_VELOCITY_Y
         self.max_velocity_drone_velocity = settings.PSO_MAX_VELOCITY_DRONE_VELOCITY
+        self.velocity_damping = settings.PSO_VELOCITY_DAMPING
+
 
         self.weight_personal_position = settings.PSO_WEIGHT_PERSONAL_POSITION
         self.weight_personal_best = settings.PSO_WEIGHT_PERSONAL_BEST
@@ -74,6 +81,28 @@ class Particle:
     def _initialize_position(self): # TODO initialize points in quadrants
         x_min, x_max = 0, self.map_bounds[0]
         y_min, y_max = 0, self.map_bounds[1]
+        vec_start_goal: np.array = np.array([
+            self.map_goal[0] - self.map_start[0],
+            self.map_goal[1] - self.map_start[1]
+        ])
+        vec_perpendicular_start_goal: np.array = np.array([
+            vec_start_goal[0],
+            -vec_start_goal[1]
+        ])
+        perpendicular_length: float = (self.num_drones - 1) * self.initial_distance_paths
+        point_middle_start_goal: np.array = np.array ([
+            self.map_start[0] + vec_start_goal[0] * 0.5,
+            self.map_start[1] + vec_start_goal[1] * 0.5
+        ])
+
+        vec_normalized_perpendicular_start_goal: np.array = vec_perpendicular_start_goal / np.linalg.norm(vec_perpendicular_start_goal)
+        point_anchor: np.array = point_middle_start_goal + perpendicular_length * 0.5 * vec_normalized_perpendicular_start_goal
+        peak_profile: list[float] = self._generate_peak_profile(self.num_drones)
+
+        initial_position: list[DronePath]
+        for height, drone in zip(peak_profile, range(self.num_drones)):
+            for control_point in range(self.num_control_points):
+                pass # TODO
 
         return [
             DronePath([
@@ -82,9 +111,9 @@ class Particle:
                     np.random.uniform(y_min, y_max), # Y-coordinate
                     np.random.uniform(0.0, self.max_drone_speed) # Drone velocity
                 )
-                for _ in range(self.num_control_points)
+                for control_point in range(self.num_control_points)
             ])
-            for _ in range(self.num_drones)
+            for height, drone in zip(peak_profile, range(self.num_drones))
         ]
 
     def _initialize_velocity(self):
@@ -159,3 +188,13 @@ class Particle:
     @staticmethod
     def clip(value: float, lower: float, upper: float) -> float:
         return max(min(value, upper), lower)
+
+    @staticmethod
+    def _generate_peak_profile(n: int, step: float = 0.1) -> list[float]:
+        half = n // 2
+        base = [1 - (i * step) for i in range(half, 0, -1)]
+        if n % 2 == 0:
+            profile = [i + 0.1 for i in base + base[::-1]]
+        else:
+            profile = base + [1.0] + base[::-1]
+        return profile
