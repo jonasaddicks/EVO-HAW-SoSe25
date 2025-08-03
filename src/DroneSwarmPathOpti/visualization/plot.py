@@ -5,7 +5,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 from DroneSwarmPathOpti.config import get_settings
-from DroneSwarmPathOpti.optimization.particle import Particle
 
 matplotlib.use('TkAgg')
 import numpy as np
@@ -18,11 +17,12 @@ from scipy.interpolate import interp1d
 from DroneSwarmPathOpti.simulation import Environment
 
 settings = get_settings()
+plot: matplotlib.pyplot
+
+fig, ax = plt.subplots()
+plt.title("Map")
 
 def plot_environment(environment: Environment):
-    fig, ax = plt.subplots()
-    plt.title("Map")
-
     # Draw obstacles
     for obstacle in environment.obstacles:
         circle = Circle(obstacle.position, obstacle.radius, color='black', alpha=0.5)
@@ -43,14 +43,6 @@ def plot_environment(environment: Environment):
         x_vals, y_vals = zip(*environment.validation_path)
         ax.plot(x_vals, y_vals, color='red', linewidth=2, label="Path")
 
-    p: Particle = Particle()
-    points: list[tuple[float, float]] = p._initialize_position_temp()
-    for i in range(len(points)):
-        x, y = points[i]
-        ax.plot(x, y, color='#e61d12', marker='o', markersize=3, linestyle='None')
-
-
-    """
     t_max: float = 0
     for i, drone in enumerate(environment.drones):
         spline = drone.path
@@ -96,7 +88,7 @@ def plot_environment(environment: Environment):
 
     drone_circles: list[Circle] = []
     for drone in environment.drones:
-        circle = Circle(environment.start.position, drone.radius, color='pink', alpha=0.6)
+        circle = Circle(environment.start.position, drone.radius, color='pink', alpha=0.8)
         drone_circles.append(circle)
         ax.add_patch(circle)
 
@@ -112,7 +104,6 @@ def plot_environment(environment: Environment):
         fig.canvas.draw_idle()
 
     slider.on_changed(update)
-    """
 
     plt.grid(True)
     ax.set_aspect('equal')

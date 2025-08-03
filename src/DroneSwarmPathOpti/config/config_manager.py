@@ -52,13 +52,26 @@ class Settings(BaseSettings):
     PSO_MAX_VELOCITY_DRONE_VELOCITY: float = 2.0
     PSO_VELOCITY_DAMPING: float = 0.5
 
+    PSO_FLUSH_SHARE: float = 0.03
+    PSO_FLUSH_WHEN: float = 0.5
+
+    PSO_DECREASE_MAX_VELOCITY_WHEN: float = 0.5
+    PSO_DECREASE_MAX_VELOCITY_GOAL: float = 3.0
+    PSO_DECREASE_INITIAL_VELOCITY_WHEN: float = 0.7
+    PSO_DECREASE_INITIAL_VELOCITY_GOAL: float = 1.5
+
     PSO_WEIGHT_PERSONAL_POSITION: float = 1.0
     PSO_WEIGHT_PERSONAL_BEST: float = 1.0
     PSO_WEIGHT_GLOBAL_BEST: float = 1.0
 
+    PSO_INCREASE_WEIGHT_GLOBAL_WHEN: float = 0.8
+    PSO_INCREASE_WEIGHT_GLOBAL_GOAL: float = 0.9
+    PSO_DECREASE_WEIGHT_PERSONAL_WHEN: float = 0.75
+    PSO_DECREASE_WEIGHT_PERSONAL_GOAL: float = 0.5
+
     FITNESS_WEIGHT_ENERGY: float = 1.0
     FITNESS_WEIGHT_TIME: float = 1.0
-    FITNESS_WEIGHT_COLLISIONS: float = 1.0
+    FITNESS_WEIGHT_COLLISIONS_OBSTACLES: float = 1.0
     FITNESS_WEIGHT_COLLISIONS_DRONES: float = 1.0
 
 @lru_cache # Only create the first instance and return the cached instance otherwise

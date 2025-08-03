@@ -26,7 +26,7 @@ def main():
     )
     environment.generate_obstacles(settings.NUMBER_OBSTACLES, settings.AVG_SIZE_OBSTACLE)
 
-    pso: PSO = PSO(calculate_fitness, environment, settings.PSO_PARTICLES, settings.PSO_ITERATIONS)
+    pso: PSO = PSO(calculate_fitness, environment)
     solution = pso.optimize()
 
     for drone, path in zip(drones, solution[0]):

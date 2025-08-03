@@ -29,7 +29,7 @@ def calculate_fitness(particle_position: list[DronePath], environment: Environme
             +
             settings.FITNESS_WEIGHT_ENERGY * energy_usage
             +
-            settings.FITNESS_WEIGHT_COLLISIONS * number_collisions_obstacles
+            settings.FITNESS_WEIGHT_COLLISIONS_OBSTACLES * number_collisions_obstacles
             +
             settings.FITNESS_WEIGHT_COLLISIONS_DRONES * number_collisions_drones
     )
