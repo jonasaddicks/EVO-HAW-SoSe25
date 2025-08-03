@@ -114,7 +114,7 @@ class Environment(metaclass=SingletonMeta):
         path = traverse(grid_data, start, goal)
         return path
 
-    def get_collisions_obstacles(self, resolution: float=1.0) -> list[tuple[int, int]]: # TODO calculate collisions with other drones
+    def get_collisions_obstacles(self, resolution: float=1.0) -> list[tuple[int, int]]:
         collisions_obstacles: list[tuple[int, int]] = []
         for drone in self.drones:
 

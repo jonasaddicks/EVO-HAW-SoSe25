@@ -5,6 +5,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 from DroneSwarmPathOpti.config import get_settings
+from DroneSwarmPathOpti.optimization.particle import Particle
 
 matplotlib.use('TkAgg')
 import numpy as np
@@ -42,6 +43,14 @@ def plot_environment(environment: Environment):
         x_vals, y_vals = zip(*environment.validation_path)
         ax.plot(x_vals, y_vals, color='red', linewidth=2, label="Path")
 
+    p: Particle = Particle()
+    points: list[tuple[float, float]] = p._initialize_position_temp()
+    for i in range(len(points)):
+        x, y = points[i]
+        ax.plot(x, y, color='#e61d12', marker='o', markersize=3, linestyle='None')
+
+
+    """
     t_max: float = 0
     for i, drone in enumerate(environment.drones):
         spline = drone.path
@@ -103,6 +112,7 @@ def plot_environment(environment: Environment):
         fig.canvas.draw_idle()
 
     slider.on_changed(update)
+    """
 
     plt.grid(True)
     ax.set_aspect('equal')
