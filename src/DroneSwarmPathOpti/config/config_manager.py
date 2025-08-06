@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     Pydantic handles type validation and parsing.
     """
     DEBUG: bool = False
+    SEED_ENVIRONMENT: int = 13
+    SEED_PARTICLE: int = 42
 
     # DRONE PARAMETERS
     NUMBER_DRONES: int = 5

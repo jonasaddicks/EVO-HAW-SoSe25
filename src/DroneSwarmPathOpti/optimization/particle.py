@@ -1,11 +1,11 @@
 import math
-
 import numpy as np
 
 from DroneSwarmPathOpti.config import get_settings
 from copy import deepcopy
 
 settings = get_settings()
+rng = np.random.default_rng(settings.SEED_PARTICLE)
 
 
 
@@ -110,11 +110,13 @@ class Particle:
             for _ in range(self.num_control_points):
                 point_anchor_control_point = point_anchor_control_point + distance_control_points * vec_normalized_start_goal # Progress to next control point
                 control_points.append((
-                    np.random.uniform(point_anchor_control_point[0] - self.initial_position_bounds / 2,
-                                      point_anchor_control_point[0] + self.initial_position_bounds / 2),  # X-coordinate
-                    np.random.uniform(point_anchor_control_point[1] - self.initial_position_bounds / 2,
-                                      point_anchor_control_point[1] + self.initial_position_bounds / 2),  # Y-coordinate
-                    np.random.uniform(0.0, self.max_drone_speed)  # Drone velocity
+                    rng.uniform(
+                        float(point_anchor_control_point[0] - self.initial_position_bounds / 2),
+                        float(point_anchor_control_point[0] + self.initial_position_bounds / 2)),  # X-coordinate
+                    rng.uniform(
+                        float(point_anchor_control_point[1] - self.initial_position_bounds / 2),
+                        float(point_anchor_control_point[1] + self.initial_position_bounds / 2)),  # Y-coordinate
+                    rng.uniform(0.0, float(self.max_drone_speed))  # Drone velocity
                 ))
             initial_position.append(DronePath(control_points))
 
@@ -127,9 +129,9 @@ class Particle:
         return [
             DronePath([
                 (
-                    np.random.uniform(-settings.PSO_MAX_INITIAL_VELOCITY_X, settings.PSO_MAX_INITIAL_VELOCITY_X),  # dx
-                    np.random.uniform(-settings.PSO_MAX_INITIAL_VELOCITY_Y, settings.PSO_MAX_INITIAL_VELOCITY_Y),  # dy
-                    np.random.uniform(-settings.PSO_MAX_INITIAL_VELOCITY_DRONE_VELOCITY, settings.PSO_MAX_INITIAL_VELOCITY_DRONE_VELOCITY)   # dv
+                    rng.uniform(-settings.PSO_MAX_INITIAL_VELOCITY_X, settings.PSO_MAX_INITIAL_VELOCITY_X),  # dx
+                    rng.uniform(-settings.PSO_MAX_INITIAL_VELOCITY_Y, settings.PSO_MAX_INITIAL_VELOCITY_Y),  # dy
+                    rng.uniform(-settings.PSO_MAX_INITIAL_VELOCITY_DRONE_VELOCITY, settings.PSO_MAX_INITIAL_VELOCITY_DRONE_VELOCITY)   # dv
                 )
                 for _ in range(self.num_control_points)
             ])
@@ -144,7 +146,7 @@ class Particle:
                 personal_best_x, personal_best_y, personal_best_v = self.best_position[drone].control_points[control_point]
                 global_best_x, global_best_y, global_best_v = global_best_position[drone].control_points[control_point]
 
-                random_factor_personal_best, random_factor_global_best = np.random.rand(), np.random.rand()
+                random_factor_personal_best, random_factor_global_best = rng.uniform(0, 1), rng.uniform(0, 1)
 
                 new_vx = (
                         settings.PSO_WEIGHT_PERSONAL_POSITION * velocity_x
@@ -196,9 +198,9 @@ class Particle:
         self.particle_velocity = [
             DronePath([
                 (
-                    np.random.uniform(-settings.PSO_MAX_INITIAL_VELOCITY_X, settings.PSO_MAX_INITIAL_VELOCITY_X),  # dx
-                    np.random.uniform(-settings.PSO_MAX_INITIAL_VELOCITY_Y, settings.PSO_MAX_INITIAL_VELOCITY_Y),  # dy
-                    np.random.uniform(-settings.PSO_MAX_INITIAL_VELOCITY_DRONE_VELOCITY, settings.PSO_MAX_INITIAL_VELOCITY_DRONE_VELOCITY)  # dv
+                    rng.uniform(-settings.PSO_MAX_INITIAL_VELOCITY_X, settings.PSO_MAX_INITIAL_VELOCITY_X),  # dx
+                    rng.uniform(-settings.PSO_MAX_INITIAL_VELOCITY_Y, settings.PSO_MAX_INITIAL_VELOCITY_Y),  # dy
+                    rng.uniform(-settings.PSO_MAX_INITIAL_VELOCITY_DRONE_VELOCITY, settings.PSO_MAX_INITIAL_VELOCITY_DRONE_VELOCITY)  # dv
                 )
                 for _ in range(self.num_control_points)
             ])
@@ -218,3 +220,58 @@ class Particle:
         else:
             profile = base + [1.0] + base[::-1] + [0.0]
         return profile
+
+    def _initialize_position_temp(self): # TODO a lot of this can be done just once instead of every time a particle is initialized
+        # Vector start -> goal
+        vec_start_goal: np.array = np.array([
+            self.map_goal[0] - self.map_start[0],
+            self.map_goal[1] - self.map_start[1]
+        ])
+        # Vector perpendicular to vector start -> goal
+        vec_perpendicular_start_goal: np.array = np.array([
+            vec_start_goal[0],
+            -vec_start_goal[1]
+        ])
+
+        # Perpendicular distance between two most outer drone paths
+        distance_perpendicular: float = (self.num_drones - 1) * self.initial_distance_paths
+
+        # Distance start -> goal
+        distance_start_goal: float = math.sqrt((self.map_goal[0] - self.map_start[0])**2 + (self.map_goal[1] - self.map_start[1])**2)
+
+        # Point in the middle of vector start -> goal
+        point_center_start_goal: np.array = np.array ([
+            self.map_start[0] + vec_start_goal[0] * 0.5,
+            self.map_start[1] + vec_start_goal[1] * 0.5
+        ])
+
+        # Normalized vector perpendicular to vector start -> goal
+        vec_normalized_perpendicular_start_goal: np.array = vec_perpendicular_start_goal / np.linalg.norm(vec_perpendicular_start_goal)
+
+        # Normalized vector start -> goal
+        vec_normalized_start_goal: np.array = vec_start_goal / np.linalg.norm(vec_start_goal)
+
+        # Point in the middle of the most outer drone path
+        point_anchor_path: np.array = point_center_start_goal + distance_perpendicular * 0.5 * vec_normalized_perpendicular_start_goal
+
+        # Portion of the distance start -> goal each drone path has
+        peak_profile: list[float] = self._generate_peak_profile(self.num_drones)
+
+        # Point on the lower end of the most outer drone path
+        point_anchor_control_point: np.array = point_anchor_path + distance_start_goal * 0.5 * peak_profile[0] * -vec_normalized_start_goal
+
+        # Distance between each control_point on the path
+        distance_control_points: float = distance_start_goal * peak_profile[0] / (self.num_drones + 1)
+
+        initial_position: list[tuple[float, float]] = []
+        for i in range(self.num_drones):
+            distance_control_points = distance_start_goal * peak_profile[i] / (self.num_control_points + 1)  # Distance between each control_point on the path
+
+            for _ in range(self.num_control_points):
+                point_anchor_control_point = point_anchor_control_point + distance_control_points * vec_normalized_start_goal # Progress to next control point
+                initial_position.append(point_anchor_control_point)
+
+            point_anchor_path = point_anchor_path + self.initial_distance_paths * -vec_normalized_perpendicular_start_goal # Move to the next drone path
+            point_anchor_control_point = point_anchor_path + distance_start_goal * 0.5 * peak_profile[i+1] * -vec_normalized_start_goal # Reset the anchor of the control points
+
+        return initial_position

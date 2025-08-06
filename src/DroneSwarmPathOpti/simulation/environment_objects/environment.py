@@ -1,16 +1,19 @@
-import random
-
 import numpy as np
+
+from DroneSwarmPathOpti.config import get_settings
 
 from .drone import Drone
 from .map_object import MapObject
 from .map_object import collision_objects
 from ..environment_utils import traverse
 
+settings = get_settings()
+rng = np.random.default_rng(settings.SEED_ENVIRONMENT)
+
 class Obstacle(MapObject):
 
     def __init__(self, position: tuple[int, int], base_radius: float):
-        super().__init__(position, random.uniform(base_radius - base_radius*0.5, base_radius*1.5))
+        super().__init__(position, rng.uniform(base_radius - base_radius*0.5, base_radius*1.5))
 
 class SingletonMeta(type):
     _instances = {}
@@ -62,9 +65,9 @@ class Environment(metaclass=SingletonMeta):
                 tries_obstacle: int = 0
 
                 while True:
-                    x = random.randint(0, x_max)
-                    y = random.randint(0, y_max)
-                    obstacle = Obstacle((x, y), base_radius)
+                    x = rng.integers(0, x_max + 1)
+                    y = rng.integers(0, y_max + 1)
+                    obstacle = Obstacle((int(x), int(y)), base_radius)
                     if (
                             (self.start is None or self.goal is None)
                             or
