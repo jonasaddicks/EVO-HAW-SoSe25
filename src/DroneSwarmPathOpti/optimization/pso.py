@@ -94,6 +94,7 @@ class PSO:
                 particle.update_velocity(self.global_best_position)
                 particle.update_position()
 
-            print(f"[Iteration {iteration+1}/{self.max_iterations}] Global best fitness: {self.global_best_fitness:.4f}")
+            #print(f"[Iteration {iteration+1}/{self.max_iterations}] Global best fitness: {self.global_best_fitness:.4f}")
+            print(f"{self.global_best_fitness:.4f}")
 
         return self.global_best_position, self.global_best_fitness
