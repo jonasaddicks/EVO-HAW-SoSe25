@@ -10,6 +10,15 @@ settings = get_settings()
 
 
 class DronePath:
+    """
+    This class represents a drone's path.
+
+    A drone's path consists on a fix number of points (specified in the config file) inside the environment.
+    Every point in a path consists of:
+        - X-coordinate
+        - Y-coordinate
+        - Velocity (The velocity a drone will have when passing this point)
+    """
 
     control_points: list[tuple[float, float, float]]
 
@@ -17,28 +26,41 @@ class DronePath:
         self.control_points = control_points # List of tuples (x -> X-coordinate, y -> Y-coordinate, v -> drone velocity)
 
     def get_positions(self) -> list[tuple[float, float]]:
+        """
+        Returns the spacial positions of the drone's path.
+
+        :return: List of tuples containing x-coordinates and y-coordinates of the drone's path.
+        """
         return [(x, y) for x, y, _ in self.control_points]
 
     def get_velocities(self) -> list[float]:
+        """
+        Returns the velocities of the drone's path.
+
+        :return: List of floats containing all the velocities of the drone at each point.
+        """
         return [v for _, _, v in self.control_points]
 
 
 class Particle:
+    """
+    This class represents a particle and bundles a fix amount of DronePaths (specified in the config file).
+    """
 
-    num_control_points: int
-    map_bounds: tuple[float, float]
-    map_start: tuple[float, float]
-    map_goal: tuple[float, float]
-    max_drone_speed: float
+    num_control_points: int # Number of points in a drone's path
+    map_bounds: tuple[float, float] # Size of the environment
+    map_start: tuple[float, float] # Position of the start
+    map_goal: tuple[float, float] # Position of the goal
+    max_drone_speed: float # Physical cap on a drone's velocity
 
-    particle_position: list[DronePath]
-    particle_velocity: list[DronePath]
+    particle_position: list[DronePath] # NOTE: this represents the particle's current position, NOT any drone's position (The current solution inside the solution space)
+    particle_velocity: list[DronePath] # NOTE: this represents the velocity of the particle, NOT the velocity of any drone (The current velocity with which the particle explores the solution space)
 
-    best_position: list[DronePath]
-    best_fitness: float
-    current_fitness: float
+    best_position: list[DronePath] # 'best position' this particle has found (so far)
+    best_fitness: float # best fitness value this particle has found (so far)
+    current_fitness: float # fitness value of the current position
 
-    velocity_damping: float
+    velocity_damping: float # damping value of the particles velocity after 'violating the boundaries'
 
     def __init__(self):
         self.num_drones = settings.NUMBER_DRONES
@@ -61,6 +83,11 @@ class Particle:
         self.current_fitness = float('inf')
 
     def _initialize_position(self): # TODO a lot of this can be done just once instead of every time a particle is initialized
+        """
+        This method initializes the first position of a particle.
+
+        :return: A randomized position inside the solution space represented by a fix amount of drone paths.
+        """
         # Vector start -> goal
         vec_start_goal: np.array = np.array([
             self.map_goal[0] - self.map_start[0],
@@ -68,8 +95,8 @@ class Particle:
         ])
         # Vector perpendicular to vector start -> goal
         vec_perpendicular_start_goal: np.array = np.array([
-            vec_start_goal[0],
-            -vec_start_goal[1]
+            vec_start_goal[1],
+            -vec_start_goal[0]
         ])
 
         # Perpendicular distance between two most outer drone paths
@@ -107,7 +134,7 @@ class Particle:
             distance_control_points = distance_start_goal * peak_profile[i] / (self.num_control_points + 1)  # Distance between each control_point on the path
 
             control_points: list[tuple[float, float, float]] = []
-            for _ in range(self.num_control_points):
+            for _ in range(self.num_control_points): # Initialize every point of a drone path inside its bounds
                 point_anchor_control_point = point_anchor_control_point + distance_control_points * vec_normalized_start_goal # Progress to next control point
                 control_points.append((
                     np.random.uniform(point_anchor_control_point[0] - self.initial_position_bounds / 2,
@@ -124,6 +151,11 @@ class Particle:
         return initial_position
 
     def _initialize_velocity(self):
+        """
+        This method initializes the initial velocity inside the by the config specified bounds.
+
+        :return: A randomized velocity for the bounds specified by the config represented by a fix amount of drone paths.
+        """
         return [
             DronePath([
                 (
@@ -136,7 +168,13 @@ class Particle:
             for _ in range(self.num_drones)
         ]
 
-    def update_velocity(self, global_best_position: list[DronePath]):
+    def update_velocity(self, global_best_position: list[DronePath]) -> None:
+        """
+        This method updates the particles velocity by taking current velocity, current personal best and the current global best into consideration.
+
+        :param global_best_position: the best position found (so far) by all competing particles.
+        :return: None
+        """
         for drone in range(self.num_drones):
             for control_point in range(self.num_control_points):
                 current_position_x, current_position_y, current_position_v = self.particle_position[drone].control_points[control_point]
@@ -168,7 +206,12 @@ class Particle:
 
                 self.particle_velocity[drone].control_points[control_point] = (new_vx, new_vy, new_vv)
 
-    def update_position(self):
+    def update_position(self) -> None:
+        """
+        This method updates the particle's current position using the particle's current velocity.
+
+        :return: None
+        """
         for drone in range(self.num_drones):
             for control_point in range(self.num_control_points):
                 x, y, v = self.particle_position[drone].control_points[control_point]
@@ -186,13 +229,18 @@ class Particle:
 
                 new_v = v + dv
                 if new_v < 0.1 or new_v > self.max_drone_speed:
-                    new_v = self.clip(v + dv, 0.1, self.max_drone_speed)  # velocity always positive but below max drone speed
+                    new_v = self.clip(v + dv, 0.1, self.max_drone_speed)  # drone's velocity always positive but below max drone speed
                     dv *= -self.velocity_damping
 
                 self.particle_velocity[drone].control_points[control_point] = (dx, dy, dv)
                 self.particle_position[drone].control_points[control_point] = (new_x, new_y, new_v)
 
-    def reset_velocity(self):
+    def reset_velocity(self) -> None:
+        """
+        This method resets the particle's current velocity by randomizing a new velocity.
+
+        :return: None
+        """
         self.particle_velocity = [
             DronePath([
                 (
@@ -207,10 +255,37 @@ class Particle:
 
     @staticmethod
     def clip(value: float, lower: float, upper: float) -> float:
+        """
+        Clamp a numeric value to a specified range.
+
+        Ensures that the returned value does not fall below the lower bound or
+        exceed the upper bound. If `value` is less than `lower`, `lower` is returned.
+        If `value` is greater than `upper`, `upper` is returned. Otherwise, `value`
+        itself is returned.
+
+        :param value: The numeric value to be clamped.
+        :param lower: The minimum allowed value (lower bound of the range).
+        :param upper: The maximum allowed value (upper bound of the range).
+        :return: The clamped value, guaranteed to lie within [lower, upper].
+        """
         return max(min(value, upper), lower)
 
     @staticmethod
     def _generate_peak_profile(n: int, step: float = 0.2) -> list[float]:
+        """
+        Generate a symmetric peak-shaped numeric profile.
+
+        Creates a list of floating-point values representing a symmetric peak that rises
+        toward the center and then falls off, followed by a trailing zero. The height of
+        the peak and the smoothness of the slope are controlled by the `step` parameter.
+
+        For an odd `n`, the profile has a single central peak of 1.0.
+        For an even `n`, the profile is symmetric around the center
+
+        :param n: The total number of values in the profile (excluding the trailing zero).
+        :param step: The increment/decrement between consecutive values on each side of the peak.
+        :return: A list of floats representing the generated peak profile, ending with 0.0.
+        """
         half = n // 2
         base = [1 - (i * step) for i in range(half, 0, -1)]
         if n % 2 == 0:

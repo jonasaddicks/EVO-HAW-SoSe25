@@ -23,6 +23,11 @@ fig, ax = plt.subplots()
 plt.title("Map")
 
 def plot_environment(environment: Environment):
+    """
+    This method plots a specified environment including its obstacles, drones and their respective paths.
+
+    :param environment: The specified environment to plot.
+    """
     # Draw obstacles
     for obstacle in environment.obstacles:
         circle = Circle(obstacle.position, obstacle.radius, color='black', alpha=0.5)

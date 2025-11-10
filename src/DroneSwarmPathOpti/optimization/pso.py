@@ -9,6 +9,9 @@ from ..config import get_settings
 settings = get_settings()
 
 class PSO:
+    """
+    This class contains the logical component of the particle swarm optimization and controls the evolutionary process.
+    """
 
     fitness_function: Callable[[list[DronePath], Environment], float]
     environment: Environment
@@ -40,6 +43,13 @@ class PSO:
         self.global_best_fitness = float("inf")
 
     def optimize(self):
+        """
+        This method regulates the process of evolution and implements the logic of the particle swarm optimization.
+
+        The amount of iterations is specified by the config.
+
+        :return: A tuple containing the best solution found after the optimization process has been completed and its corresponding fitness value.
+        """
         for iteration in range(self.max_iterations):
 
             # ADJUST PARAMETERS WHILE PROGRESSING

@@ -3,6 +3,9 @@ from .map_object import MapObject
 
 
 class Drone(MapObject):
+    """
+    This class represents a drone in an environment.
+    """
 
     path: CubicBSpline | None
 

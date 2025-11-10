@@ -7,6 +7,9 @@ from DroneSwarmPathOpti.visualization.plot import plot_environment
 settings = get_settings()
 
 def main():
+    """
+    This is the main function of the application to perform and simulate a particle swarm optimization.
+    """
     drones: list[Drone] = [
         Drone(None,
               (settings.START_X,
