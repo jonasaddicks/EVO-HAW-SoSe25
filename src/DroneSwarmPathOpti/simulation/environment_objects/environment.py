@@ -6,6 +6,7 @@ from .drone import Drone
 from .map_object import MapObject
 from .map_object import collision_objects
 from ..environment_utils import traverse
+from ...project_logger import log_info, Source, log_warning
 
 settings = get_settings()
 rng = np.random.default_rng(settings.SEED_ENVIRONMENT)
@@ -103,9 +104,9 @@ class Environment(metaclass=SingletonMeta):
                         break  # Exit loop if generated object collides neither with start nor goal
                     else:
                         tries_obstacle += 1
-                        print(f'obstacle clipping with start or goal in try {tries_obstacle} - placing again')
+                        log_info(Source.environment, f'obstacle clipping with start or goal in try {tries_obstacle} - placing again')
                         if tries_obstacle >= 10:
-                            print(f'exceeded number of tries for placing an obstacle, obstacles remain empty')
+                            log_warning(Source.environment, f'exceeded number of tries for placing an obstacle, obstacles remain empty')
                             return False # Exceeded maximum number of tries to generate an obstacle -> obstacles probably too big
                 obstacles_list.append(obstacle)
             self.obstacles = obstacles_list
@@ -117,10 +118,10 @@ class Environment(metaclass=SingletonMeta):
                     break
                 else:
                     tries_traversable += 1
-                    print(f'failed to traverse map in try {tries_traversable} - regenerating obstacles')
+                    log_info(Source.environment, f'failed to traverse map in try {tries_traversable} - regenerating obstacles')
                     if tries_traversable >= 10:
                         self.validation_path = [] # The Map should've been traversable, but the algorithm was not able to find a possible path with the given number of tries
-                        print('failed to find a valid path - max number of tries exceeded, path is empty')
+                        log_warning(Source.environment, 'failed to find a valid path - max number of tries exceeded, path is empty')
                         return False # Exceeded maximum number of tries to traverse the map -> probably too many obstacles
             else: # Map must not be traversable or start/goal is none
                 self.validation_path = None
@@ -153,7 +154,7 @@ class Environment(metaclass=SingletonMeta):
     def get_collisions_obstacles(self, resolution: float=1.0) -> list[tuple[int, int]]:
         """
         This method checks for collisions between drones and obstacles in the environment.
-        By using interpolation with the drones current path and radius a list containing all collisions and their positions is generated.
+        By using interpolation with the drone's current path and radius, a list containing all collisions and their positions is generated.
 
         :param resolution: The resolution determines the size of the steps with which the collision detection should be performed on a drone's path. A lower resolution implies more collision checks will be performed.
         :return: A list of all collisions between drones and obstacles.

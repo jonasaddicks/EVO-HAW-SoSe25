@@ -10,6 +10,11 @@ class Source(Enum):
     """
     config = 'CONFIG'
     logger = 'LOGGER'
+    optimization = 'OPTIMIZATION'
+    environment = 'ENVIRONMENT'
+    environment_utils = 'ENVIRONMENT_UTILS'
+    visualization = 'VISUALIZATION'
+    main = 'MAIN'
 
     def __str__(self):
         return self.value

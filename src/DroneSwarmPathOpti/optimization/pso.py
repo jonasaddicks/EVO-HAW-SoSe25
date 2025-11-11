@@ -5,6 +5,7 @@ from DroneSwarmPathOpti.simulation import Environment
 
 from .particle import Particle, DronePath
 from ..config import get_settings
+from ..project_logger import log_info, Source, log_debug
 
 settings = get_settings()
 
@@ -46,7 +47,7 @@ class PSO:
         """
         This method regulates the process of evolution and implements the logic of the particle swarm optimization.
 
-        The amount of iterations is specified by the config.
+        The config specifies the number of iterations.
 
         :return: A tuple containing the best solution found after the optimization process has been completed and its corresponding fitness value.
         """
@@ -54,23 +55,30 @@ class PSO:
 
             # ADJUST PARAMETERS WHILE PROGRESSING
             if iteration > self.max_iterations * settings.PSO_DECREASE_MAX_VELOCITY_WHEN:
+                log_debug(Source.optimization, 'PSO_DECREASE_MAX_VELOCITY_WHEN -> true')
                 settings.PSO_MAX_VELOCITY_X -= self.step_decrease_max_velocity_x
                 settings.PSO_MAX_VELOCITY_Y -= self.step_decrease_max_velocity_y
 
             if iteration > self.max_iterations * settings.PSO_DECREASE_INITIAL_VELOCITY_WHEN:
+                log_debug(Source.optimization, 'PSO_DECREASE_INITIAL_VELOCITY_WHEN -> true')
                 settings.PSO_MAX_INITIAL_VELOCITY_X -= self.step_decrease_initial_velocity_x
                 settings.PSO_MAX_INITIAL_VELOCITY_Y -= self.step_decrease_initial_velocity_y
 
             if iteration > self.max_iterations * settings.PSO_INCREASE_WEIGHT_GLOBAL_WHEN:
+                log_debug(Source.optimization, 'PSO_INCREASE_WEIGHT_GLOBAL_WHEN -> true')
                 settings.PSO_WEIGHT_GLOBAL_BEST -= self.step_increase_weight_global
 
             if iteration > self.max_iterations * settings.PSO_DECREASE_WEIGHT_PERSONAL_WHEN:
+                log_debug(Source.optimization, 'PSO_DECREASE_WEIGHT_PERSONAL_WHEN -> true')
                 settings.PSO_WEIGHT_PERSONAL_POSITION -= self.step_decrease_weight_personal
 
+            fitness_list: list[float] = []
             for particle in self.particles:
                 fitness = self.fitness_function(particle.particle_position, self.environment) # Calculate fitness for current particle
 
                 particle.current_fitness = fitness
+                fitness_list.append(fitness)
+
 
                 # Update personal best
                 if fitness < particle.best_fitness:
@@ -84,17 +92,19 @@ class PSO:
 
             self.particles.sort(key=lambda p: p.current_fitness)
             if iteration > self.max_iterations * settings.PSO_FLUSH_WHEN:
+                log_debug(Source.optimization, 'PSO_FLUSH_WHEN -> true')
                 for i in range((self.num_particles - 1), int(self.num_particles - self.num_particles * settings.PSO_FLUSH_SHARE), -1):
                     self.particles[i].particle_position = deepcopy(self.global_best_position)
                     self.particles[i].best_position = deepcopy(self.global_best_position)
                     self.particles[i].reset_velocity()
 
             # Update Velocity und Position
+            log_debug(Source.optimization, 'Updating velocities and positions')
             for particle in self.particles:
                 particle.update_velocity(self.global_best_position)
                 particle.update_position()
 
-            #print(f"[Iteration {iteration+1}/{self.max_iterations}] Global best fitness: {self.global_best_fitness:.4f}")
-            print(f"{self.global_best_fitness:.4f}")
+            log_debug(Source.optimization, f'FitnessList: {fitness_list}')
+            log_info(Source.optimization, f'[Iteration {iteration+1}/{self.max_iterations}] Global best fitness: {self.global_best_fitness:.4f}')
 
         return self.global_best_position, self.global_best_fitness
