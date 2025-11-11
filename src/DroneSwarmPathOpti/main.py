@@ -1,3 +1,4 @@
+import asyncio
 from logging import Logger
 
 from DroneSwarmPathOpti.config import get_settings
@@ -9,10 +10,19 @@ from DroneSwarmPathOpti.visualization.plot import plot_environment
 
 settings = get_settings()
 
-def main():
+async def main():
     """
     This is the main function of the application to perform and simulate a particle swarm optimization.
     """
+    await initialize_async()
+
+def cli_main():
+    """
+    CLI entry point for launching the application.
+    """
+    asyncio.run(main())
+
+async def initialize_async():
     drones: list[Drone] = [
         Drone(None,
               (settings.START_X,
@@ -48,4 +58,4 @@ def main():
     plot_environment(environment)
 
 if __name__ == '__main__':
-    main()
+    cli_main()

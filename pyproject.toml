@@ -1,1 +1,37 @@
-#TODO
+[project]
+name = "DroneSwarm_PSO"
+version = "1.0.0"
+description = "A Python implementation of a particle swarm optimization (PSO) algorithm applied to multi-drone path planning. This project serves as the practical component of an academic essay in the 'Evolutionary Algorithms' course, focusing on efficient, collision-free navigation in a 2D environment."
+authors = [
+    { name = "Jonas Addicks", email = "jonas.addicks@haw-hamburg.de" },
+]
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = [
+    "matplotlib==3.10.7",
+    "networkx==3.4.2",
+    "numpy==2.3.4",
+    "pydantic_settings==2.12.0",
+    "python-dotenv==1.2.1",
+    "scipy==1.16.3"
+]
+keywords = ["drone", "particle", "swarm", "optimization", "simulation", "spline"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research"
+]
+
+[project.scripts]
+droneswarm-pso = "DroneSwarmPathOpti.main:cli_main"
+
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
