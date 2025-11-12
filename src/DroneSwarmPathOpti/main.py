@@ -1,5 +1,4 @@
 import asyncio
-from logging import Logger
 
 from DroneSwarmPathOpti.config import get_settings
 from DroneSwarmPathOpti.optimization.fitness import calculate_fitness

@@ -14,20 +14,20 @@ class Settings(BaseSettings):
     Pydantic handles type validation and parsing.
     """
     DEBUG: bool = False
-    SEED_ENVIRONMENT: int = 13
-    SEED_PARTICLE: int = 42
+    SEED_ENVIRONMENT: int = 13 # Seed for the randomizer of the environment generation
+    SEED_PARTICLE: int = 42 # Seed for the randomizer of the particle swarm optimization
 
     # DRONE PARAMETERS
     NUMBER_DRONES: int = 5 # Number of drones in an environment
     DRONE_RADIUS: float = 1.0 # Size of a drone
     DRONE_MAX_SPEED: float = 10.0 # Maximum drone speed
-    INITIAL_CONTROL_POINTS: int = 5 # Amount of points in a single drone path from start to goal
+    INITIAL_CONTROL_POINTS: int = 5 # Number of points in a single drone path from start to goal
 
     # ENVIRONMENT PARAMETERS
     ENVIRONMENT_SIZE_X: int = 100 # Width of the environment
     ENVIRONMENT_SIZE_Y: int = 100 # Height of the environment
 
-    ENVIRONMENT_TRAVERSABLE: bool = True # Forces at least one path without any collisions from start to goal (NOTE: depending on environment size and amount of obstacles the calculation power needed can be exceedingly high.)
+    ENVIRONMENT_TRAVERSABLE: bool = True # Forces at least one path without any collisions from start to goal (NOTE: depending on environment size and number of obstacles, the calculation power needed can be exceedingly high.)
     NUMBER_OBSTACLES: int = 10 # Number of obstacles in the environment
     AVG_SIZE_OBSTACLE: int = 20 # Average size of all the obstacles
 
@@ -55,20 +55,20 @@ class Settings(BaseSettings):
     PSO_VELOCITY_DAMPING: float = 0.5 # Scalar which a particle is scaled with when violating environment bounds and bouncing back
 
     PSO_FLUSH_SHARE: float = 0.03 # Portion of particles to be flushed each generation
-    PSO_FLUSH_WHEN: float = 0.5 # After how many generations will the flush occur for the first time (depending on the max amount of iterations)
+    PSO_FLUSH_WHEN: float = 0.5 # After how many generations will the flush occur for the first time (depending on the max number of iterations)
 
-    PSO_DECREASE_MAX_VELOCITY_WHEN: float = 0.5 # After how many generations will the max velocity begin to adapt (depending on the max amount of iterations)
+    PSO_DECREASE_MAX_VELOCITY_WHEN: float = 0.5 # After how many generations will the max velocity begin to adapt (depending on the max number of iterations)
     PSO_DECREASE_MAX_VELOCITY_GOAL: float = 3.0 # Max velocity value to gradually be approached through the generations
-    PSO_DECREASE_INITIAL_VELOCITY_WHEN: float = 0.7 # After how many generations will the initial velocity begin to adapt (depending on the max amount of iterations)
+    PSO_DECREASE_INITIAL_VELOCITY_WHEN: float = 0.7 # After how many generations will the initial velocity begin to adapt (depending on the max number of iterations)
     PSO_DECREASE_INITIAL_VELOCITY_GOAL: float = 1.5 # Max initial velocity value to gradually be approached through the generations
 
     PSO_WEIGHT_PERSONAL_POSITION: float = 1.0 # Weight the current personal position of a particle
     PSO_WEIGHT_PERSONAL_BEST: float = 1.0 # Weight the current best personal position of a particle
     PSO_WEIGHT_GLOBAL_BEST: float = 1.0 # Weight the current best global position of all particles
 
-    PSO_INCREASE_WEIGHT_GLOBAL_WHEN: float = 0.8 # After how many generations will the global weight begin to adapt (depending on the max amount of iterations)
+    PSO_INCREASE_WEIGHT_GLOBAL_WHEN: float = 0.8 # After how many generations will the global weight begin to adapt (depending on the max number of iterations)
     PSO_INCREASE_WEIGHT_GLOBAL_GOAL: float = 0.9 # Global weight value to gradually be approached through the generations
-    PSO_DECREASE_WEIGHT_PERSONAL_WHEN: float = 0.75 # After how many generations will the personal weight begin to adapt (depending on the max amount of iterations)
+    PSO_DECREASE_WEIGHT_PERSONAL_WHEN: float = 0.75 # After how many generations will the personal weight begin to adapt (depending on the max number of iterations)
     PSO_DECREASE_WEIGHT_PERSONAL_GOAL: float = 0.5 # Personal weight value to gradually be approached through the generations
 
     FITNESS_WEIGHT_ENERGY: float = 1.0 # How important is energy usage
