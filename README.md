@@ -1,4 +1,4 @@
-# Drone swarm - Particle Swarm Optimization
+# Drone Swarm: Particle Swarm Optimization
 
 This repository contains an experimental implementation of particle swarm optimization (PSO)
 for coordinated multi-drone path planning in a 2D, obstacle-filled environment.
@@ -17,11 +17,25 @@ The system evaluates candidate solutions based on multiple goals:
 - Minimizing energy expenditure.  
 
 
-## Features
+## Table of Contents
 
-## Motivation & Use Cases
+- [Features](#features)
+- [Motivation & Use Cases](#motivation)
+- [Setup](#setup)
+  - [Dependencies](#dependencies)
+  - [Configuration](#configuration)
+- [Running](#running)
+  - [Running a Deterministic Experiment](#deterministic)
+- [Algorithmic Details](#algorithm)
+- [Visualization](#visualization)
+- [Limitations](#limitations)
 
-## Setup
+
+## <a name="features"></a>Features
+
+## <a name="motivation"></a>Motivation & Use Cases
+
+## <a name="setup"></a>Setup
 
 First, it is recommended to install the application and all dependencies in
 a virtual environment:
@@ -37,7 +51,7 @@ pip install .
 ```
 This will install the project like a regular package by building and copying all source
 code files into `site-packages/`. All dependencies will be installed automatically. 
-If the software is edited the application has to be build again using `pip install .`.
+If the software is edited the application has to be built again using `pip install .`.
 
 Note: The installation registers a CLI entry point (`droneswarm-pso`) if specified in the
 `pyproject.toml` under `[project.scripts]`. The `-e` option installs an editable version,
@@ -45,9 +59,9 @@ creating a symbolic link (`.egg-link`) in your environment, allowing local code 
 to take effect immediately without reinstalling.
 
 
-### Dependencies
+### <a name="dependencies"></a>Dependencies
 
-The application utilizes the following libraries which will be installed automatically by
+The application uses the following libraries which will be installed automatically by
 the `pyproject.toml`
 
 ```shell
@@ -60,7 +74,7 @@ the `pyproject.toml`
 ```
 
 
-### Configuration
+### <a name="configuration"></a>Configuration
 
 Customize the `.env.public` file to match your desired runtime parameters:
 
@@ -131,17 +145,17 @@ FITNESS_WEIGHT_COLLISIONS_DRONES=30.0# How important is drone collision preventi
 If the `.env.public` cannot be found the application will use default values.
 
 
-## Running
+## <a name="running"></a>Running
 
 Use the CLI entry point to launch the application: 
 ```droneswarm-pso```
 This command is registered automatically via the pyproject.toml under `[project.scripts]`.
 
 
-### Running a Deterministic Experiment
+### <a name="deterministic"></a>Running a Deterministic Experiment
 
-## Algorithmic Details
+## <a name="algorithm"></a>Algorithmic Details
 
-## Visualization
+## <a name="visualization"></a>Visualization
 
-## Limitations
+## <a name="limitations"></a>Limitations
