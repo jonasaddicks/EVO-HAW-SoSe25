@@ -14,8 +14,8 @@ class Settings(BaseSettings):
     Pydantic handles type validation and parsing.
     """
     DEBUG: bool = False
-    SEED_ENVIRONMENT: int = 13 # Seed for the randomizer of the environment generation
-    SEED_PARTICLE: int = 42 # Seed for the randomizer of the particle swarm optimization
+    SEED_ENVIRONMENT: int = -1 # Seed for the randomizer of the environment generation -> -1 for no initial seed
+    SEED_PARTICLE: int = -1 # Seed for the randomizer of the particle swarm optimization -> -1 for no initial seed
 
     # DRONE PARAMETERS
     NUMBER_DRONES: int = 5 # Number of drones in an environment
