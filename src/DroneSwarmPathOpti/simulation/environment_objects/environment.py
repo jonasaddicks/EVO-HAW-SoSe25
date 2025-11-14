@@ -9,7 +9,7 @@ from ..environment_utils import traverse
 from ...project_logger import log_info, Source, log_warning
 
 settings = get_settings()
-rng = np.random.default_rng(settings.SEED_ENVIRONMENT)
+rng = np.random.default_rng(None if settings.SEED_ENVIRONMENT == -1 else settings.SEED_ENVIRONMENT)
 
 class Obstacle(MapObject):
     """

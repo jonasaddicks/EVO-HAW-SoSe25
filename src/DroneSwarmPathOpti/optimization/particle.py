@@ -5,7 +5,7 @@ from DroneSwarmPathOpti.config import get_settings
 from copy import deepcopy
 
 settings = get_settings()
-rng = np.random.default_rng(settings.SEED_PARTICLE)
+rng = np.random.default_rng(None if settings.SEED_PARTICLE == -1 else settings.SEED_PARTICLE)
 
 
 
