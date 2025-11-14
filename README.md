@@ -20,25 +20,45 @@ The system evaluates candidate solutions based on multiple goals:
 ## Table of Contents
 
 - [Features](#features)
-- [Motivation & Use Cases](#motivation)
 - [Setup](#setup)
   - [Dependencies](#dependencies)
   - [Configuration](#configuration)
 - [Running](#running)
   - [Running a Deterministic Experiment](#deterministic)
 - [Algorithmic Details](#algorithm)
+  - [Solution Representation](#solution-representation)
+  - [PSO Mechanics](#mechanics)
+  - [Fitness](#fitness)
+  - [Collision Detection](#collision-detection)
 - [Visualization](#visualization)
 - [Limitations](#limitations)
 
 
 ## <a name="features"></a>Features
 
-## <a name="motivation"></a>Motivation & Use Cases
+- Multi-agent optimization: each particle encodes a full set of drone paths (each path is a
+sequence of control points `x, y, v`)
+- Smooth trajectories: cubic B-splines built from control points produce continuous position,
+velocity and acceleration profiles
+- Fitness that balances objectives: configurable weighted sum of time, energy and collisions
+(obstacles and drones)
+- Randomized environment generator with obstacles, optional traversability enforcement and a
+map validator.
+- Collision detection:
+  - Drone-obstacle collisions: spatial sampling on splines.
+  - Drone-drone collisions: time-synchronized sampling and pairwise checks.
+- Deterministic experiments via seeds for reproducibility.
+- CLI entrypoint and a matplotlib-based visualization to inspect trajectories and collisions.
+- Configurable via .env.public
+
+<img src="examplepics/example1.png" alt="example1" width="300">
+<img src="examplepics/example2.png" alt="example2" width="300">
+
 
 ## <a name="setup"></a>Setup
 
 First, it is recommended to install the application and all dependencies in
-a virtual environment:
+a Python 3.12+ environment:
 ```
 python3 -m venv .venv
 source .venv/bin/activate
@@ -80,8 +100,8 @@ Customize the `.env.public` file to match your desired runtime parameters:
 
 ```dotenv
 DEBUG=False
-SEED_ENVIRONMENT=13# Seed for the randomizer of the environment generation
-SEED_PARTICLE=42# Seed for the randomizer of the particle swarm optimization
+SEED_ENVIRONMENT=-1# Seed for the randomizer of the environment generation -> -1 for no initial seed
+SEED_PARTICLE=-1# Seed for the randomizer of the particle swarm optimization -> -1 for no initial seed
 
 # DRONE PARAMETERS
 NUMBER_DRONES=3# Number of drones in an environment
@@ -151,11 +171,99 @@ Use the CLI entry point to launch the application:
 ```droneswarm-pso```
 This command is registered automatically via the pyproject.toml under `[project.scripts]`.
 
+The CLI entry point calls `cli_main()` which runs `async main()` and performs:
+- environment generation
+- PSO optimization
+- plotting the final solution
+
 
 ### <a name="deterministic"></a>Running a Deterministic Experiment
 
+To reproduce results exactly, set both seeds in .env.public:
+- `SEED_PARTICLE` controls particle initialization & PSO randomness.
+- `SEED_ENVIRONMENT` controls obstacle placement and environment randomness.
+
+Then run the CLI. For reproducibility in parallel runs, ensure all other sources of
+nondeterminism (e.g., threaded matplotlib backends, multiple RNG instances) are controlled.
+
+
 ## <a name="algorithm"></a>Algorithmic Details
+
+This section explains the main algorithmic building blocks and points out important implementation
+details and caveats.
+
+### <a name="solution-representation"></a>Solution Representation
+
+- A particle encodes `N` drone paths (one per drone).
+- A drone path contains `M` control points: each control point is `(x, y, v)`
+- Cubic B-splines (`CubicBSpline`) are used to turn control points into continuous `x(t)`, `y(t)` splines; timestamps are
+derived from consecutive Euclidean distances divided by average velocities.
+
+
+### <a name="mechanics"></a>PSO Mechanics
+
+- Velocities and positions are updated per control point, treated as 3D vectors `(x, y, v)`.
+- The algorithm maintains per-particle personal bests and a shared global best.
+- Several schedule parameters adapt PSO behavior during the run (max velocity decay, weight adaptation, particle flush).
+- A pattern of anchor points is calculated dynamically between start and goal using the number of drones and their
+respective control points. Control points will be initialized randomly around their corresponding anchor points.
+This is done under the assumption that a straight path from start to goal is statistically closer to an optimal solution
+than a fully randomly generated path.
+
+<img src="examplepics/c3d2_initialQuadrants.png" alt="AnchorPointPatternC3D2" width="300">
+<img src="examplepics/c4d5_initialQuadrants.png" alt="AnchorPointPatternC4D5" width="300">
+
+
+### <a name="fitness"></a>Fitness
+
+calculate_fitness(...) sums weighted contributions:
+- `time_usage` (sum of spline durations for all drones)
+- `energy_usage` (numerical integral of `alpha * v + beta * a^2` sampled along spline)
+- counts of collisions with obstacles and between drones
+Weights are configurable (see `.env.public`).
+
+
+### <a name="collision-detection"></a>Collision Detection
+
+- Drone–obstacle: sample spline positions in space and test circle overlap with obstacle circle.
+- Drone–drone: compute positions at synchronized time samples and test pairwise overlaps.
+
 
 ## <a name="visualization"></a>Visualization
 
+The project uses matplotlib for visual diagnostics and time-series animations.
+
+`plot_environment(environment)` draws:
+- environment bounds and obstacles,
+- start / goal,
+- final spline trajectories for each drone,
+- detected collision points if any,
+- time animation.
+
+<img src="examplepics/plotExample.png" alt="EnvironmentPlot" width="300">
+
+- Orange dots: collisions between drones
+- Red dots: collision between drones and obstacles
+- Red transparent circles: drones
+- Pink crosses: control points
+- Colored splines: drone paths
+- Black circles: obstacles
+
+
 ## <a name="limitations"></a>Limitations
+
+- Simplified energy model. `calculate_energy_usage` uses a surrogate `alpha * v + beta * a^2`. It is not an
+aero/battery-accurate energy model. For realistic aircraft/drone energy modeling you need aerodynamics, thrust-to-drag,
+battery efficiency curves, and payload models.
+- 2D only. The environment and splines are 2D. Extending to 3D is straightforward conceptually but requires more careful
+collision checks and possibly different energy/time models.
+- Static obstacles. No dynamic obstacles or moving agents are supported (but the framework can be extended).
+- Scalability. As:
+  - `NUMBER_DRONES`,
+  - `INITIAL_CONTROL_POINTS`,
+  - `NUMBER_OBSTACLES`,
+  - `NUMBER_PARTICLES`
+  grows, collision checks and particle calculations and therefore runtime grow exponentially.
+- Single-objective fitness (weighted sum). Weighted sum merges multiple objectives into one scalar. This works but may
+hide trade-offs.
+- Singleton environment prevents multi-experiment parallelization within the same process.
